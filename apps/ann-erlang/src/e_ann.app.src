@@ -1,0 +1,12 @@
+{application, e_ann,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { e_ann_app, []}},
+  {env, []}
+ ]}.

@@ -1,0 +1,11 @@
+{application,e_ann,
+             [{description,[]},
+              {vsn,"1"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {mod,{e_ann_app,[]}},
+              {env,[]},
+              {modules,[e_ann_app,e_ann_hidden_neuron,e_ann_input,
+                        e_ann_input_neuron,e_ann_input_neuron_sup,e_ann_math,
+                        e_ann_ouput_neuron_sup,e_ann_output_neuron,
+                        e_ann_output_neuron_sup,e_ann_sup]}]}.
