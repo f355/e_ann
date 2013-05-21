@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <cantheman@campanja.com>
+%%% @author cantheman <can@campanja.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17 Mar 2013 by cantheman <cantheman@campanja.com>
+%%% Created : 17 Mar 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_input_neuron_sup).
 
@@ -29,10 +29,9 @@ start_link() ->
 %%%===================================================================
 
 init(_Args) ->
-    log4erl:log(info, "Starting ~p I-Supervisor~n", [self()]),
+    log4erl:log(info, "Starting input_neuron_sup (~p)~n", [self()]),
     RestartStrategy = {one_for_one, 5, 10},
-    InputNeuron = child(e_ann_input_neuron),
-    {ok, {RestartStrategy, [InputNeuron]}}.
+    {ok, {RestartStrategy, []}}.
 
 start_child() ->
     supervisor:start_child(?MODULE, []).
@@ -40,5 +39,5 @@ start_child() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-child(Module) ->
-    {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.
+%% child(Module) ->
+%%     {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.

@@ -1,12 +1,12 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <cantheman@campanja.com>
+%%% @author cantheman <can@campanja.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17 Mar 2013 by cantheman <cantheman@campanja.com>
+%%% Created : 21 May 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
--module(e_ann_output_neuron_sup).
+-module(e_ann_hidden_neuron_sup).
 
 -behaviour(supervisor).
 
@@ -27,8 +27,9 @@ start_link() ->
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
+
 init(_Args) ->
-    log4erl:log(info, "Starting output_neuron_supervisor (~p) ~n", [self()]),
+    log4erl:log(info, "Starting hidden_neuron_sup (~p)~n", [self()]),
     RestartStrategy = {one_for_one, 5, 10},
     {ok, {RestartStrategy, []}}.
 
@@ -38,5 +39,3 @@ start_child() ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-%% child(Module) ->
-%%     {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.
