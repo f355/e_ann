@@ -1,3 +1,9 @@
+%%%-------------------------------------------------------------------
+%%% @doc
+%%% The application callback module for e_ann.
+%%% @end
+%%%
+%%%-------------------------------------------------------------------
 -module(e_ann_app).
 
 -behaviour(application).
@@ -8,11 +14,17 @@
 %% ===================================================================
 %% Application callbacks
 %% ===================================================================
-
-start(_, _) ->
-    application:start(log4erl),
-    log4erl:conf("/home/cantheman/Project/ann/apps/ann-erlang/priv/log4erl.conf"),
+start(normal, no_arg) ->
     e_ann_sup:start_link().
 
-stop(_State) ->
+%%--------------------------------------------------------------------
+%% Function: stop(Data) -> ok.
+%% @doc
+%%   Stops the application.
+%% @end
+%%--------------------------------------------------------------------
+-spec stop(Data::_) -> ok.
+%%--------------------------------------------------------------------
+stop(_) ->
     ok.
+

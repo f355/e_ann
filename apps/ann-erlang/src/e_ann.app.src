@@ -1,12 +1,13 @@
 {application, e_ann,
  [
-  {description, ""},
+  {description, "Artificial Neural Networks in Erlang OTP Style"},
   {vsn, "1"},
   {registered, []},
+  {modules, [e_ann]},
   {applications, [
                   kernel,
                   stdlib
                  ]},
-  {mod, { e_ann_app, []}},
+  {mod, { e_ann_app, no_arg}},
   {env, []}
  ]}.

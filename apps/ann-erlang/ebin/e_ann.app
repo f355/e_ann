@@ -1,11 +1,11 @@
 {application,e_ann,
-             [{description,[]},
+             [{description,"Artificial Neural Networks in Erlang OTP Style"},
               {vsn,"1"},
               {registered,[]},
+              {modules,[e_ann,e_ann_app,e_ann_bias_neuron,e_ann_handler,
+                        e_ann_hidden_neuron,e_ann_input,e_ann_input_neuron,
+                        e_ann_input_neuron_sup,e_ann_math,e_ann_output_neuron,
+                        e_ann_output_neuron_sup,e_ann_sup]},
               {applications,[kernel,stdlib]},
-              {mod,{e_ann_app,[]}},
-              {env,[]},
-              {modules,[e_ann_app,e_ann_hidden_neuron,e_ann_input,
-                        e_ann_input_neuron,e_ann_input_neuron_sup,e_ann_math,
-                        e_ann_ouput_neuron_sup,e_ann_output_neuron,
-                        e_ann_output_neuron_sup,e_ann_sup]}]}.
+              {mod,{e_ann_app,no_arg}},
+              {env,[]}]}.

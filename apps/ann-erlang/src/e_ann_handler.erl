@@ -9,7 +9,7 @@
 %%% Created :  19 May 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_handler).
+-export([train/4]).
 
 train(Input, Ideal, Architecture, ErrorRate) ->
-    M = length(Input).
-    
+    ok.
