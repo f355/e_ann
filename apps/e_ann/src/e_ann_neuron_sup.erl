@@ -4,9 +4,9 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17 May 2013 by cantheman <can@campanja.com>
+%%% Created : 13 June 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
--module(e_ann_sup).
+-module(e_ann_neuron_sup).
 
 -behaviour(supervisor).
 
@@ -28,10 +28,14 @@ start_link() ->
 %% ===================================================================
 
 init(_Args) ->
-    log4erl:log(info, "Starting e_ann supervisor (~p)~n", [self()]),
+    log4erl:log(info, "Starting e_ann_neuron supervisor (~p)~n", [self()]),
     RestartStrategy = {one_for_one, 5, 10},
-    Supervisors = [child(e_ann_neuron_sup)],
-    {ok, {RestartStrategy, Supervisors}}.
+    Children = [child(e_ann_input_neuron),
+                child(e_ann_input_neuron),
+                child(e_ann_hidden_neuron),
+                child(e_ann_hidden_neuron),
+                child(e_ann_output_neuron)],
+    {ok, {RestartStrategy, Children}}.
 
 child(Module) ->
-    {Module, {Module, start_link, []}, temporary, 2000, supervisor, [Module]}.
+    {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.
