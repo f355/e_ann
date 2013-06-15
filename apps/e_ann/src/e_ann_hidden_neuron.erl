@@ -1,17 +1,17 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <cantheman@cantheman-System-Product-Name>
+%%% @author cantheman <can@campanaj.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%%
+%%% Hidden neuron module.
 %%% @end
-%%% Created : 10 Mar 2013 by cantheman <cantheman@cantheman-System-Product-Name>
+%%% Created : 10 Mar 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_hidden_neuron).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, sigmoid/1]).
+-export([start_link/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {weight}).
 
 %%%===================================================================
 %%% API
@@ -32,7 +32,11 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-    {ok, #state{}}.
+    Weight = random:uniform(),
+    log4erl:log(info, "Starting ~p Hidden neuron with weight of ~p~n",
+                [self(), Weight]),
+    State = #state{weight=Weight},
+    {ok, State}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -53,12 +57,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-sigmoid(X) ->
-    1 / (1 + math:exp(-X)).
-
-dot_prod([], []) ->
-    0;
-dot_prod([XHead | XTail], [YHead | YTail]) ->
-    XHead * YHead + dot_prod(XTail, YTail).
-

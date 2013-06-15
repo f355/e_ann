@@ -2,7 +2,7 @@
 %%% @author cantheman <can@campanja.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% 
+%%% Bias neuron with static input of 1.
 %%% @end
 %%% Created : 10 Mar 2013 by cantheman <can@campanja.com>
 %%%-------------------------------------------------------------------
@@ -17,8 +17,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE). 
--define(BIASINPUT, 1).
+-define(SERVER, ?MODULE).
+-define(INPUT, 1).
 
 -record(state, {weight, output}).
 
