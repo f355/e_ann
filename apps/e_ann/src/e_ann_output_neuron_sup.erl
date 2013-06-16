@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%% Output neuron supervisor who dynamically adds output neurons.
 %%% @end
-%%% Created : 14 June 2013 by cantheman <can@campanja.com>
+%%% Created : 14 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_output_neuron_sup).
 

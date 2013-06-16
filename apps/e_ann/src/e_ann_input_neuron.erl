@@ -1,17 +1,17 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%%
 %%% @end
-%%% Created :  9 Mar 2013 by cantheman <can@campanja.com>
+%%% Created :  9 Mar 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_input_neuron).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, feed_forward/4]).
+-export([start_link/1, feed_forward/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,14 +19,14 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {input, weight, output}).
+-record(state, {input, weight}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 
-start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+start_link(Args) ->
+    gen_server:start_link(?MODULE, [Args], []).
 
 feed_forward(Pid, Input, Weight, Output) ->
     gen_server:call(Pid, {feed_forward, Input, Weight, Output}).
@@ -35,11 +35,11 @@ feed_forward(Pid, Input, Weight, Output) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([]) ->
+init([Input]) ->
     Weight = random:uniform(),
-    log4erl:log(info, "Starting ~p Input neuron with weight~p~n",
-		[self(), Weight]),
-    State = #state{weight=Weight},
+    log4erl:log(info, "Starting ~p Input neuron with input:~p weight:~p~n",
+		[self(), Input, Weight]),
+    State = #state{weight=Weight, input=Input},
     {ok, State}.
 
 handle_call({feed_forward, Input, Weight, Output}, _From, State) ->

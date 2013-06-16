@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%% Hidden neuron supervisor who dynamically adds hidden neurons.
 %%% @end
-%%% Created : 13 June 2013 by cantheman <can@campanja.com>
+%%% Created : 13 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_hidden_neuron_sup).
 

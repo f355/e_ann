@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%% Bias neuron with static input of 1.
 %%% @end
-%%% Created : 10 Mar 2013 by cantheman <can@campanja.com>
+%%% Created : 10 Mar 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_bias_neuron).
 

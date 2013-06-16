@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%%
 %%% @end
-%%% Created : 17 May 2013 by cantheman <can@campanja.com>
+%%% Created : 17 May 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_sup).
 

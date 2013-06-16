@@ -1,17 +1,17 @@
 %%%-------------------------------------------------------------------
-%%% @author cantheman <can@campanja.com>
+%%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
 %%% Input neuron supervisor who dynamically adds input neurons.
 %%% @end
-%%% Created : 13 June 2013 by cantheman <can@campanja.com>
+%%% Created : 13 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_input_neuron_sup).
 
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, add_child/1]).
+-export([start_link/0, add_child/2]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -31,11 +31,11 @@ init([]) ->
     log4erl:log(info, "Starting e_ann_input_neuron supervisor (~p)~n",
                 [self()]),
     RestartStrategy = {simple_one_for_one, 0, 1},
-    Children = [child(e_ann_input_neuron)],
+    Children = [child(e_ann_input_neuron, [])],
     {ok, {RestartStrategy, Children}}.
 
-add_child(Sup) ->
-    supervisor:start_child(Sup, []).
+add_child(Sup, Input) ->
+    supervisor:start_child(Sup, [Input]).
 
-child(Module) ->
-    {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.
+child(Module, Input) ->
+    {Module, {Module, start_link, Input}, temporary, 2000, worker, [Module]}.
