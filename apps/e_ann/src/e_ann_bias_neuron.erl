@@ -20,7 +20,7 @@
 -define(SERVER, ?MODULE).
 -define(INPUT, 1).
 
--record(state, {weight, output}).
+-record(state, {weight}).
 
 
 %%%===================================================================

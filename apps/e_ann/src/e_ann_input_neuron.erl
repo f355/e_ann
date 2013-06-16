@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, feed_forward/4]).
+-export([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -24,12 +24,8 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-
 start_link(Args) ->
     gen_server:start_link(?MODULE, [Args], []).
-
-feed_forward(Pid, Input, Weight, Output) ->
-    gen_server:call(Pid, {feed_forward, Input, Weight, Output}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -42,8 +38,7 @@ init([Input]) ->
     State = #state{weight=Weight, input=Input},
     {ok, State}.
 
-handle_call({feed_forward, Input, Weight, Output}, _From, State) ->
-    io:format("input~p weight~p output~p~n",[Input,Weight,Output]),
+handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
 handle_cast(_Msg, State) ->

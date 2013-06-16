@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, add_input/2, activate_neuron/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,13 +19,19 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {weight}).
+-record(state, {weight, input_list=[], output}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link(?MODULE, [], []).
+
+add_input(NeuronPid, Input) ->
+    gen_server:call(NeuronPid, {add_to_input_list, Input}).
+
+activate_neuron(NeuronPid) ->
+    gen_server:call(NeuronPid, activate_neuron).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -38,6 +44,16 @@ init([]) ->
     State = #state{weight=Weight},
     {ok, State}.
 
+handle_call({add_to_input_list, Input}, _From, State) ->
+    InputList = State#state.input_list,
+    NewInputList = [Input | InputList],
+    NewState = #state{input_list=NewInputList},
+    {reply, ok, NewState};
+handle_call(activate_neuron, _From, State) ->
+    Inputs = State#state.input_list,
+    Output = activation(Inputs),
+    NewState = #state{output=Output},
+    {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -57,3 +73,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+activation(Inputs) ->
+    Sum = lists:sum(Inputs),
+    e_ann_math:sigmoid(Sum).
