@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {weight, input_list=[], output}).
+-record(state, {weight=0, input_list=[], output=0}).
 
 %%%===================================================================
 %%% API
@@ -39,7 +39,7 @@ activate_neuron(NeuronPid) ->
 
 init([]) ->
     Weight = random:uniform(),
-    log4erl:log(info, "Starting ~p Hidden neuron with weight of ~p~n",
+    log4erl:log(info, "Starting (~p) Hidden neuron with weight of ~p~n",
                 [self(), Weight]),
     State = #state{weight=Weight},
     {ok, State}.
