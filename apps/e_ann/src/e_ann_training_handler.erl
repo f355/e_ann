@@ -12,29 +12,45 @@
 
 -compile([export_all]).
 
-train(Inputs, Ideal, Architecture, ErrorRate) ->
-    ok.
+%train(TrainingData, Architecture, ErrorRate)
+%  when length(Inputs) =:= length(Ideal) ->
+%    ok.
 
 %% Example of architecture [{input_neurons,2,true}, {hidden_layers,1, true},
 %%                          {hidden_layer_neurons, 2},{output_neurons,1,true}]
-read_architecture_and_spawn_neurons(Architecture) ->
-    [{bias_sup,BSup}, {hidden_sup, HSup},
-     {output_sup, OSup}, {input_sup, ISup}] = get_neuron_sup_pids(e_ann_sup),
-    [{_,INeuronCount, IBias}, {_,LayerCount,HBias},
-     {_, HNeuronCount}, {_,ONeuronCount,OBias}] = Architecture,
-    InputLayer = 
+%% read_architecture_and_spawn_neurons(Architecture) ->
+%%     [{bias_sup,BSup}, {hidden_sup, HSup},
+%%      {output_sup, OSup}, {input_sup, ISup}] = get_neuron_sup_pids(e_ann_sup),
+%%     [{_, INeuronCount, IBias}, {_, LayerCount, HBias},
+%%      {_, HNeuronCount}, {_,ONeuronCount,OBias}] = Architecture,
+%%     ok.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+input_layer(TrainingData, ICount, ISup, BSup, BiasConfig) ->
+    InputNeuronPids = get_input_neurons(ICount, ISup, TrainingData, []),
+    Bias = bias(BiasConfig, BSup),
+    case Bias of
+        [] ->
+            InputNeuronPids;
+        Bias ->
+            [Bias | InputNeuronPids]
+    end.
+
+bias(Config, BSup) ->
+    case Config of
+        true ->
+            {ok, Pid} = e_ann_bias_neuron_sup:add_child(BSup),
+            Pid;
+        false ->
+            []
+    end.
 
 get_neuron_sup_pids(Sup) when is_atom(Sup) ->
     [{_, BSup, _, _}, {_, HSup, _, _},
      {_, OSup, _, _}, {_, ISup, _, _}] = supervisor:which_children(Sup),
     [{bias_sup, BSup},{hidden_sup, HSup},{output_sup, OSup},{input_sup, ISup}].
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-input_layer(ICount, ISup, IBias, Inputs) ->
-    ok.
 
 get_input_neurons(0, _, [], Acc) ->
     Acc;
