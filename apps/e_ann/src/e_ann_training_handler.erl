@@ -10,6 +10,7 @@
 %%%-------------------------------------------------------------------
 -module(e_ann_training_handler).
 
+-define(MAINSUPERVISOR, e_ann_sup).
 -compile([export_all]).
 
 %train(TrainingData, Architecture, ErrorRate)
@@ -28,15 +29,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+hidden_layer(HCount, HSup, BSup, BiasConfig) ->
+    HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
+    check_for_bias(BiasConfig, BSup, HiddenNeuronPids).
+
 input_layer(TrainingData, ICount, ISup, BSup, BiasConfig) ->
     InputNeuronPids = get_input_neurons(ICount, ISup, TrainingData, []),
-    Bias = bias(BiasConfig, BSup),
-    case Bias of
-        [] ->
-            InputNeuronPids;
-        Bias ->
-            [Bias | InputNeuronPids]
-    end.
+    check_for_bias(BiasConfig, BSup, InputNeuronPids).
 
 bias(Config, BSup) ->
     case Config of
@@ -47,10 +46,21 @@ bias(Config, BSup) ->
             []
     end.
 
-get_neuron_sup_pids(Sup) when is_atom(Sup) ->
+get_neuron_sup_pids() ->
     [{_, BSup, _, _}, {_, HSup, _, _},
-     {_, OSup, _, _}, {_, ISup, _, _}] = supervisor:which_children(Sup),
+     {_, OSup, _, _}, {_, ISup, _, _}] =
+        supervisor:which_children(?MAINSUPERVISOR),
     [{bias_sup, BSup},{hidden_sup, HSup},{output_sup, OSup},{input_sup, ISup}].
+
+
+check_for_bias(BiasConfig, BSup, Neurons) ->
+    Bias = bias(BiasConfig, BSup),
+    case Bias of
+        [] ->
+            Neurons;
+        Bias ->
+            [Bias | Neurons]
+    end.
 
 get_input_neurons(0, _, [], Acc) ->
     Acc;
@@ -59,3 +69,12 @@ get_input_neurons(ICount, ISup, Inputs, Acc) ->
     NewCount = ICount - 1,
     Acc2 = [Pid | Acc],
     get_input_neurons(NewCount, ISup, tl(Inputs), Acc2).
+
+get_hidden_neurons(0, _, Acc) ->
+    Acc;
+get_hidden_neurons(HCount, HSup, Acc) ->
+    {ok, Pid} = e_ann_hidden_neuron_sup:add_child(HSup),
+    NewCount = HCount - 1,
+    Acc2 = [Pid | Acc],
+    get_hidden_neurons(NewCount, HSup, Acc2).
+
