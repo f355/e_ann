@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,13 +19,13 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {global_error}).
+-record(state, {global_error, ideal_output}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+start_link(Args) ->
+    gen_server:start_link(?MODULE, [Args], []).
 
 back_probagation() ->
     ok.
@@ -33,9 +33,11 @@ back_probagation() ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([]) ->
-    log4erl:log(info, "Starting ~p output neuron ~n",[self()]),
-    {ok, #state{}}.
+init([Ideal]) ->
+    log4erl:log(info, "Starting (~p) output neuron ideal output of:~p~n",
+                [self(), Ideal]),
+    State = #state{ideal_output=Ideal},
+    {ok, State}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,

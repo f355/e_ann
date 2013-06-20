@@ -29,6 +29,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+output_layer(Ideal, OCount, OSup, BSup, BiasConfig) ->
+    OutputNeuronPids = get_output_neurons(OCount, OSup, Ideal, []),
+    check_for_bias(BiasConfig, BSup, OutputNeuronPids).
+
 hidden_layer(HCount, HSup, BSup, BiasConfig) ->
     HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
     check_for_bias(BiasConfig, BSup, HiddenNeuronPids).
@@ -78,3 +82,10 @@ get_hidden_neurons(HCount, HSup, Acc) ->
     Acc2 = [Pid | Acc],
     get_hidden_neurons(NewCount, HSup, Acc2).
 
+get_output_neurons(0, _, [], Acc) ->
+    Acc;
+get_output_neurons(OCount, OSup, Ideal, Acc) ->
+    {ok, Pid} = e_ann_output_neuron_sup:add_child(OSup, hd(Ideal)),
+    NewCount = OCount - 1,
+    Acc2 = [Pid | Acc],
+    get_output_neurons(NewCount, OSup, tl(Ideal), Acc2).
