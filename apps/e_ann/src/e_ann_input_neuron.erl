@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1]).
+-export([start_link/1, calculate_output/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,13 +19,16 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {input, weight}).
+-record(state, {input=0.0, weight=0.0, output=0.0}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 start_link(Args) ->
     gen_server:start_link(?MODULE, [Args], []).
+
+calculate_output(NeuronPid, TargetPids) ->
+    gen_server:call(NeuronPid, {calculate_output, TargetPids}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -38,6 +41,13 @@ init([Input]) ->
     State = #state{weight=Weight, input=Input},
     {ok, State}.
 
+handle_call({calculate_output, TargetPids}, _From, State) ->
+    Input = State#state.input,
+    Weight = State#state.weight,
+    Output = Input * Weight,
+    NewState = #state{output=Output},
+    [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids ],
+    {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 

@@ -47,6 +47,7 @@ init([]) ->
 handle_call({add_to_input_list, Input}, _From, State) ->
     InputList = State#state.input_list,
     NewInputList = [Input | InputList],
+    log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
     NewState = #state{input_list=NewInputList},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
