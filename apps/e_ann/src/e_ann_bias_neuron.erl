@@ -34,7 +34,7 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-    Weight = random:uniform(),
+    Weight = e_ann_math:generate_random_weight(),
     log4erl:log(info, "Starting ~p Bias neuron with weight of ~p~n",
 		[self(),Weight]),
     State = #state{weight=Weight},

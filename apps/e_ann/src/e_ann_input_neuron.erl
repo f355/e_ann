@@ -35,7 +35,7 @@ calculate_output(NeuronPid, TargetPids) ->
 %%%===================================================================
 
 init([Input]) ->
-    Weight = random:uniform(),
+    Weight = e_ann_math:generate_random_weight(),
     log4erl:log(info, "Starting ~p Input neuron with input:~p weight:~p~n",
 		[self(), Input, Weight]),
     State = #state{weight=Weight, input=Input},
@@ -44,8 +44,9 @@ init([Input]) ->
 handle_call({calculate_output, TargetPids}, _From, State) ->
     Input = State#state.input,
     Weight = State#state.weight,
+    io:format("Input~p weight~p~n",[Input,Weight]),
     Output = Input * Weight,
-    NewState = #state{output=Output},
+    NewState = State#state{output=Output},
     [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids ],
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->

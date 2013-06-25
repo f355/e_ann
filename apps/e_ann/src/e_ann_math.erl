@@ -2,7 +2,7 @@
 
 -export([mse/1, ess/1, rms/1, sigmoid/1,
          output_delta/2, linear_error/2,
-        hyperbolic_tangent/1]).
+         hyperbolic_tangent/1, activation/1]).
 -compile([export_all]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,3 +53,12 @@ output_delta(E, Sum) ->
 
 interior_delta(Sum, Delta, Weight) ->
     derivative_sigmoid(Sum) * (Delta * Weight).
+
+activation(Inputs) ->
+    Sum = lists:sum(Inputs),
+    e_ann_math:sigmoid(Sum).
+
+generate_random_weight() ->
+    {_, _, Random} = random:seed(now()),
+    Float = list:concat(["0", ".", integer_to_list(Random)]),
+    list_to_float(Float).

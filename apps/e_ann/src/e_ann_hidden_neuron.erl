@@ -41,7 +41,7 @@ calculate_output(NeuronPid, TargetPids) ->
 %%%===================================================================
 
 init([]) ->
-    Weight = random:uniform(),
+    Weight = e_ann_math:generate_random_weight(),
     log4erl:log(info, "Starting (~p) Hidden neuron with weight of ~p~n",
                 [self(), Weight]),
     State = #state{weight=Weight},
@@ -50,22 +50,23 @@ init([]) ->
 handle_call({calculate_output, TargetPids}, _From, State) ->
     Input = State#state.activation,
     Weight = State#state.weight,
+    io:format("Input~p weight~p~n",[Input,Weight]),
     Output = Input * Weight,
-    NewState = #state{output=Output},
+    NewState = State#state{output=Output},
     [ e_ann_output_neuron:add_input(Pid, Output) || Pid <- TargetPids ],
     {reply, ok, NewState};
 handle_call({add_to_input_list, Input}, _From, State) ->
     InputList = State#state.input_list,
     NewInputList = [Input | InputList],
     log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
-    NewState = #state{input_list=NewInputList},
+    NewState = State#state{input_list=NewInputList},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Inputs = State#state.input_list,
-    Activation = activation(Inputs),
+    Activation = e_ann_math:activation(Inputs),
     log4erl:log(info, "(~p) activated with value of:~p~n",
                 [self(), Activation]),
-    NewState = #state{activation=Activation},
+    NewState = State#state{activation=Activation},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -86,6 +87,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-activation(Inputs) ->
-    Sum = lists:sum(Inputs),
-    e_ann_math:sigmoid(Sum).
