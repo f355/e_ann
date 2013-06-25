@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, add_input/2, activate_neuron/1]).
+-export([start_link/0, add_input/2, activate_neuron/1, calculate_output/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {weight=0, input_list=[], output=0}).
+-record(state, {weight=0.0, input_list=[], output=0.0, activation=0.0}).
 
 %%%===================================================================
 %%% API
@@ -33,6 +33,9 @@ add_input(NeuronPid, Input) ->
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
 
+calculate_output(NeuronPid, TargetPids) ->
+    gen_server:call(NeuronPid, {calculate_output, TargetPids}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -44,6 +47,13 @@ init([]) ->
     State = #state{weight=Weight},
     {ok, State}.
 
+handle_call({calculate_output, TargetPids}, _From, State) ->
+    Input = State#state.activation,
+    Weight = State#state.weight,
+    Output = Input * Weight,
+    NewState = #state{output=Output},
+    [ e_ann_output_neuron:add_input(Pid, Output) || Pid <- TargetPids ],
+    {reply, ok, NewState};
 handle_call({add_to_input_list, Input}, _From, State) ->
     InputList = State#state.input_list,
     NewInputList = [Input | InputList],
@@ -52,8 +62,10 @@ handle_call({add_to_input_list, Input}, _From, State) ->
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Inputs = State#state.input_list,
-    Output = activation(Inputs),
-    NewState = #state{output=Output},
+    Activation = activation(Inputs),
+    log4erl:log(info, "(~p) activated with value of:~p~n",
+                [self(), Activation]),
+    NewState = #state{activation=Activation},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,

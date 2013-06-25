@@ -13,18 +13,6 @@
 -define(MAINSUPERVISOR, e_ann_sup).
 -compile([export_all]).
 
-%train(TrainingData, Architecture, ErrorRate)
-%  when length(Inputs) =:= length(Ideal) ->
-%    ok.
-
-%% Example of architecture [{input_neurons,2,true}, {hidden_layers,1, true},
-%%                          {hidden_layer_neurons, 2},{output_neurons,1,true}]
-%% read_architecture_and_spawn_neurons(Architecture) ->
-%%     [{bias_sup,BSup}, {hidden_sup, HSup},
-%%      {output_sup, OSup}, {input_sup, ISup}] = get_neuron_sup_pids(e_ann_sup),
-%%     [{_, INeuronCount, IBias}, {_, LayerCount, HBias},
-%%      {_, HNeuronCount}, {_,ONeuronCount,OBias}] = Architecture,
-%%     ok.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -12,6 +12,3 @@ main_test() ->
     OutputNeuronNumber = 1,
     Architecture = {InputNeuronNumber, HiddenNeuronNumber, OutputNeuronNumber},
     ?assertEqual(ok, e_ann_handler:train(Input, Ideal, Architecture, ErrorRate)).
-
-
-					
