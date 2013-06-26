@@ -14,20 +14,23 @@
 -compile([export_all]).
 
 train() ->
-    [{_,BSup},{_,HSup},{_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
+    [{_,BSup},{_,HSup},
+     {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
     Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,BSup,false),
     Hlayer = e_ann_training_handler:hidden_layer(2,HSup,BSup,false),
     Olayer = e_ann_training_handler:output_layer([1.0],1,OSup,BSup,false),
-    I1 = hd(Ilayer),
-    [I2] = tl(Ilayer),
-    H1 = hd(Hlayer),
-    [H2] = tl(Hlayer),
-    O1 = hd(Olayer),
-    [I1,I2, H1, H2, O1].
+    [Ilayer, Hlayer, Olayer].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+input_layer_activation(Ilayer, Hlayer) ->
+    [ e_ann_input_neuron:calculate_output(Neuron, Hlayer) || Neuron <- Ilayer ].
+
+hidden_layer_activation(Hlayer, Olayer) ->
+    [ e_ann_hidden_neuron:activate_neuron(Neuron) || Neuron <- Hlayer ],
+    [ e_ann_hidden_neuron:calculate_output(Neuron,Olayer) || Neuron <- Hlayer ].
+
 output_layer(Ideal, OCount, OSup, BSup, BiasConfig) ->
     OutputNeuronPids = get_output_neurons(OCount, OSup, Ideal, []),
     check_for_bias(BiasConfig, BSup, OutputNeuronPids).
