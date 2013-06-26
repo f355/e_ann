@@ -3,7 +3,8 @@
 -export([mse/1, ess/1, rms/1, sigmoid/1,
          output_delta/2, linear_error/2,
          hyperbolic_tangent/1, activation/1]).
--compile([export_all]).
+
+-export([generate_random_weight/0]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Global Error Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,6 +60,10 @@ activation(Inputs) ->
     e_ann_math:sigmoid(Sum).
 
 generate_random_weight() ->
-    {_, _, Random} = random:seed(now()),
-    Float = list:concat(["0", ".", integer_to_list(Random)]),
-    list_to_float(Float).
+    Random = integer_to_list(crypto:rand_uniform(-100000, 100000)),
+    case hd(Random) of
+        45 ->
+            list_to_float(lists:concat(["-", "0.", tl(Random)]));
+        _ ->
+            list_to_float(lists:concat(["0.", Random]))
+    end.

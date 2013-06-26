@@ -10,6 +10,7 @@
 -export([start/0]).
 
 start() ->
+    crypto:start(),
     application:start(log4erl),
     setup_logging(),
     application:start(?MODULE).

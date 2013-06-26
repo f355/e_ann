@@ -13,6 +13,17 @@
 -define(MAINSUPERVISOR, e_ann_sup).
 -compile([export_all]).
 
+train() ->
+    [{_,BSup},{_,HSup},{_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
+    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,BSup,false),
+    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,BSup,false),
+    Olayer = e_ann_training_handler:output_layer([1.0],1,OSup,BSup,false),
+    I1 = hd(Ilayer),
+    [I2] = tl(Ilayer),
+    H1 = hd(Hlayer),
+    [H2] = tl(Hlayer),
+    O1 = hd(Olayer),
+    [I1,I2, H1, H2, O1].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
