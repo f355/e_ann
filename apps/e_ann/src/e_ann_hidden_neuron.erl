@@ -50,7 +50,6 @@ init([]) ->
 handle_call({calculate_output, TargetPids}, _From, State) ->
     Input = State#state.activation,
     Weight = State#state.weight,
-    io:format("Input~p weight~p~n",[Input,Weight]),
     Output = Input * Weight,
     NewState = State#state{output=Output},
     [ e_ann_output_neuron:add_input(Pid, Output) || Pid <- TargetPids ],

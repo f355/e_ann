@@ -16,10 +16,12 @@
 train() ->
     [{_,BSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
-    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,BSup,false),
-    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,BSup,false),
+    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,BSup,true),
+    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,BSup,true),
     Olayer = e_ann_training_handler:output_layer([1.0],1,OSup,BSup,false),
-    [Ilayer, Hlayer, Olayer].
+    input_layer_activation(Ilayer, Hlayer),
+    hidden_layer_activation(Hlayer, Olayer),
+    e_ann_output_neuron:activate_neuron(hd(Olayer)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
