@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, calculate_output/2]).
+-export([start_link/1, calculate_output/2, init_weights/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {input=0.0, weight=0.0, output=0.0}).
+-record(state, {input=0.0, weights=[], outputs=[]}).
 
 %%%===================================================================
 %%% API
@@ -30,23 +30,31 @@ start_link(Args) ->
 calculate_output(NeuronPid, TargetPids) ->
     gen_server:call(NeuronPid, {calculate_output, TargetPids}).
 
+init_weights(NeuronPid, Count) ->
+    gen_server:call(NeuronPid, {init_weights, Count}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
 init([Input]) ->
-    Weight = e_ann_math:generate_random_weight(),
-    log4erl:log(info, "Starting ~p Input neuron with input:~p weight:~p~n",
-		[self(), Input, Weight]),
-    State = #state{weight=Weight, input=Input},
+    log4erl:log(info, "Starting ~p Input neuron with input:~p ~n",
+		[self(), Input]),
+    State = #state{input=Input},
     {ok, State}.
 
+handle_call({init_weights, Count}, _From, State) ->
+    Weights = e_ann_math:generate_random_weights(Count),
+    NewState = State#state{weights=Weights},
+    log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
+    {reply, ok, NewState};
 handle_call({calculate_output, TargetPids}, _From, State) ->
     Input = State#state.input,
-    Weight = State#state.weight,
-    Output = Input * Weight,
-    NewState = State#state{output=Output},
-    [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids ],
+    Weights = State#state.weights,
+    Outputs = [ Input * Weight || Weight <- Weights ],
+    NewState = State#state{outputs=Outputs},
+    [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids,
+                                                    Output <- Outputs ],
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.

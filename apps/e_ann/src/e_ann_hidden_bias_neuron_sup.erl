@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 13 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
--module(e_ann_bias_neuron_sup).
+-module(e_ann_hidden_bias_neuron_sup).
 
 -behaviour(supervisor).
 
@@ -31,7 +31,7 @@ init([]) ->
     log4erl:log(info, "Starting e_ann_bias_neuron supervisor (~p)~n",
                 [self()]),
     RestartStrategy = {simple_one_for_one, 0, 1},
-    Children = [child(e_ann_bias_neuron)],
+    Children = [child(e_ann_hidden_bias_neuron)],
     {ok, {RestartStrategy, Children}}.
 
 add_child(Sup) ->

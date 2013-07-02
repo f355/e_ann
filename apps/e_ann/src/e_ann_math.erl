@@ -4,7 +4,7 @@
          output_delta/2, linear_error/2,
          hyperbolic_tangent/1, activation/1]).
 
--export([generate_random_weight/0]).
+-export([generate_random_weights/1]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Global Error Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,11 +59,20 @@ activation(Inputs) ->
     Sum = lists:sum(Inputs),
     e_ann_math:sigmoid(Sum).
 
-generate_random_weight() ->
+generate_random_weights(Count) ->
+    generate_random_weight(Count, []).
+
+generate_random_weight(0, Acc) ->
+    Acc;
+generate_random_weight(Count, Acc) ->
     Random = integer_to_list(crypto:rand_uniform(-100000, 100000)),
     case hd(Random) of
         45 ->
-            list_to_float(lists:concat(["-", "0.", tl(Random)]));
+            Weight = list_to_float(lists:concat(["-", "0.", tl(Random)])),
+            Acc2 = [Weight | Acc],
+            generate_random_weight(Count - 1 , Acc2);
         _ ->
-            list_to_float(lists:concat(["0.", Random]))
+            Weight = list_to_float(lists:concat(["0.", Random])),
+            Acc2 = [Weight | Acc],
+            generate_random_weight(Count - 1, Acc2)
     end.

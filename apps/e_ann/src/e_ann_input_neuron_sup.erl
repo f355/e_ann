@@ -38,4 +38,5 @@ add_child(Sup, Input) ->
     supervisor:start_child(Sup, [Input]).
 
 child(Module, Input) ->
-    {Module, {Module, start_link, Input}, temporary, 2000, worker, [Module]}.
+    {Module, {Module, start_link, Input},
+     temporary, 2000, worker, [Module]}.
