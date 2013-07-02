@@ -2,37 +2,32 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% Hidden neuron module.
+%%% Bias neuron for output layer with static input of 1.
 %%% @end
-%%% Created : 10 Mar 2013 by cantheman <java10cana@gmail.com>
+%%% Created : 02 July 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
--module(e_ann_hidden_neuron).
+-module(e_ann_output_bias_neuron).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, add_input/2, activate_neuron/1,
-         calculate_output/2, init_weights/2]).
+-export([start_link/0, calculate_output/2, init_weights/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(INPUT, 1).
 
--record(state, {weights=[], input_list=[], outputs=[], activation=0.0}).
+-record(state, {weights=[], outputs=[]}).
+
 
 %%%===================================================================
 %%% API
 %%%===================================================================
 start_link() ->
     gen_server:start_link(?MODULE, [], []).
-
-add_input(NeuronPid, Input) ->
-    gen_server:call(NeuronPid, {add_to_input_list, Input}).
-
-activate_neuron(NeuronPid) ->
-    gen_server:call(NeuronPid, activate_neuron).
 
 calculate_output(NeuronPid, TargetPids) ->
     gen_server:call(NeuronPid, {calculate_output, TargetPids}).
@@ -45,10 +40,11 @@ init_weights(NeuronPid, Count) ->
 %%%===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting (~p) Hidden neuron~n",
-                [self()]),
+    log4erl:log(info, "Starting ~p Bias neuron ~n",
+		[self()]),
     State = #state{weights=[]},
     {ok, State}.
+
 
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
@@ -56,25 +52,11 @@ handle_call({init_weights, Count}, _From, State) ->
     log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
 handle_call({calculate_output, TargetPids}, _From, State) ->
-    Input = State#state.activation,
     Weights = State#state.weights,
-    Outputs = [ Input * Weight || Weight <- Weights ],
+    Outputs = [ ?INPUT * Weight || Weight <- Weights ],
     NewState = State#state{outputs=Outputs},
     [ e_ann_output_neuron:add_input(Pid, Output) || Pid <- TargetPids,
                                                     Output <- Outputs],
-    {reply, ok, NewState};
-handle_call({add_to_input_list, Input}, _From, State) ->
-    InputList = State#state.input_list,
-    NewInputList = [Input | InputList],
-    log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
-    NewState = State#state{input_list=NewInputList},
-    {reply, ok, NewState};
-handle_call(activate_neuron, _From, State) ->
-    Inputs = State#state.input_list,
-    Activation = e_ann_math:activation(Inputs),
-    log4erl:log(info, "(~p) activated with value of:~p~n",
-                [self(), Activation]),
-    NewState = State#state{activation=Activation},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -95,3 +77,4 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
