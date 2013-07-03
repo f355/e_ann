@@ -40,7 +40,7 @@ init_weights(NeuronPid, Count) ->
 %%%===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting ~p Bias neuron ~n",
+    log4erl:log(info, "Starting ~p Hidden bias neuron ~n",
 		[self()]),
     State = #state{weights=[]},
     {ok, State}.

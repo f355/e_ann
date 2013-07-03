@@ -16,9 +16,13 @@
 train() ->
     [{_,IBSup},{_, HBSup}, {_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
-    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,IBSup,true),
-    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,HBSup,true),
-    Olayer = e_ann_training_handler:output_layer([1.0],1,OSup),
+    HCount = 2,
+    OCount = 1,
+    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2, ISup, HCount),
+    Hlayer = e_ann_training_handler:hidden_layer(HCount ,HSup , OCount),
+    Olayer = e_ann_training_handler:output_layer([1.0], OCount, OSup),
+    IBias = input_bias(true, IBSup, 2),
+    HBias = hidden_bias(true, HBSup, 1),
     input_layer_activation(Ilayer, Hlayer),
     hidden_layer_activation(Hlayer, Olayer),
     e_ann_output_neuron:activate_neuron(hd(Olayer)).
@@ -36,22 +40,13 @@ hidden_layer_activation(Hlayer, Olayer) ->
 output_layer(Ideal, OCount, OSup) ->
     get_output_neurons(OCount, OSup, Ideal, []).
 
-hidden_layer(HCount, HSup, BSup, BiasConfig) ->
+hidden_layer(HCount, HSup , OCount) ->
     HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
-    check_for_bias(BiasConfig, BSup, HiddenNeuronPids).
+    [e_ann_hidden_neuron:init_weights(Pid, OCount) || Pid <- HiddenNeuronPids].
 
-input_layer(TrainingData, ICount, ISup, BSup, BiasConfig) ->
+input_layer(TrainingData, ICount, ISup, HCount) ->
     InputNeuronPids = get_input_neurons(ICount, ISup, TrainingData, []),
-    check_for_bias(BiasConfig, BSup, InputNeuronPids).
-
-bias(Config, BSup) ->
-    case Config of
-        true ->
-            {ok, Pid} = e_ann_bias_neuron_sup:add_child(BSup),
-            Pid;
-        false ->
-            []
-    end.
+    [e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids].
 
 get_neuron_sup_pids() ->
     [{_, IBSup, _, _}, {_, HBSup,_ ,_}, {_, HSup, _, _},
@@ -61,13 +56,24 @@ get_neuron_sup_pids() ->
      {output_sup, OSup},{input_sup, ISup}].
 
 
-check_for_bias(BiasConfig, BSup, Neurons) ->
-    Bias = bias(BiasConfig, BSup),
-    case Bias of
-        [] ->
-            Neurons;
-        Bias ->
-            [Bias | Neurons]
+input_bias(Config, Sup, Count) ->
+    case Config of
+        true ->
+            {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),
+            e_ann_input_bias_neuron:init_weights(Pid, Count),
+            Pid;
+        false ->
+            []
+    end.
+
+hidden_bias(Config, Sup, Count) ->
+    case Config of
+        true ->
+            {ok, Pid} = e_ann_hidden_bias_neuron_sup:add_child(Sup),
+            e_ann_hidden_bias_neuron:init_weights(Pid, Count),
+            Pid;
+        false ->
+            []
     end.
 
 get_input_neurons(0, _, [], Acc) ->
