@@ -14,11 +14,11 @@
 -compile([export_all]).
 
 train() ->
-    [{_,BSup},{_,HSup},
+    [{_,IBSup},{_, HBSup}, {_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
-    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,BSup,true),
-    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,BSup,true),
-    Olayer = e_ann_training_handler:output_layer([1.0],1,OSup,BSup,false),
+    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2,ISup,IBSup,true),
+    Hlayer = e_ann_training_handler:hidden_layer(2,HSup,HBSup,true),
+    Olayer = e_ann_training_handler:output_layer([1.0],1,OSup),
     input_layer_activation(Ilayer, Hlayer),
     hidden_layer_activation(Hlayer, Olayer),
     e_ann_output_neuron:activate_neuron(hd(Olayer)).
@@ -33,9 +33,8 @@ hidden_layer_activation(Hlayer, Olayer) ->
     [ e_ann_hidden_neuron:activate_neuron(Neuron) || Neuron <- Hlayer ],
     [ e_ann_hidden_neuron:calculate_output(Neuron,Olayer) || Neuron <- Hlayer ].
 
-output_layer(Ideal, OCount, OSup, BSup, BiasConfig) ->
-    OutputNeuronPids = get_output_neurons(OCount, OSup, Ideal, []),
-    check_for_bias(BiasConfig, BSup, OutputNeuronPids).
+output_layer(Ideal, OCount, OSup) ->
+    get_output_neurons(OCount, OSup, Ideal, []).
 
 hidden_layer(HCount, HSup, BSup, BiasConfig) ->
     HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
@@ -55,10 +54,11 @@ bias(Config, BSup) ->
     end.
 
 get_neuron_sup_pids() ->
-    [{_, BSup, _, _}, {_, HSup, _, _},
+    [{_, IBSup, _, _}, {_, HBSup,_ ,_}, {_, HSup, _, _},
      {_, OSup, _, _}, {_, ISup, _, _}] =
         supervisor:which_children(?MAINSUPERVISOR),
-    [{bias_sup, BSup},{hidden_sup, HSup},{output_sup, OSup},{input_sup, ISup}].
+    [{input_bias_sup, IBSup},{hidden_bias_sup, HBSup}, {hidden_sup, HSup},
+     {output_sup, OSup},{input_sup, ISup}].
 
 
 check_for_bias(BiasConfig, BSup, Neurons) ->

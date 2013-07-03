@@ -33,7 +33,8 @@ init(_Args) ->
     Supervisors = [child(e_ann_input_neuron_sup),
                    child(e_ann_output_neuron_sup),
                    child(e_ann_hidden_neuron_sup),
-                   child(e_ann_bias_neuron_sup)],
+                   child(e_ann_hidden_bias_neuron_sup),
+                   child(e_ann_input_bias_neuron_sup)],
     {ok, {RestartStrategy, Supervisors}}.
 
 child(Module) ->

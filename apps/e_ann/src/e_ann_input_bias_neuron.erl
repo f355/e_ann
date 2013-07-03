@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 02 July 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
--module(e_ann_output_bias_neuron).
+-module(e_ann_input_bias_neuron).
 
 -behaviour(gen_server).
 
