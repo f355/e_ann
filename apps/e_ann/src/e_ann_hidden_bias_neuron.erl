@@ -55,8 +55,7 @@ handle_call({calculate_output, TargetPids}, _From, State) ->
     Weights = State#state.weights,
     Outputs = [ ?INPUT * Weight || Weight <- Weights ],
     NewState = State#state{outputs=Outputs},
-    [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids,
-                                                    Output <- Outputs],
+    e_ann_hidden_neuron:forward_output(Outputs, TargetPids),
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,

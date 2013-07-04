@@ -16,37 +16,45 @@
 train() ->
     [{_,IBSup},{_, HBSup}, {_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
+    ICount = 2,
     HCount = 2,
     OCount = 1,
-    Ilayer = e_ann_training_handler:input_layer([1.0,0.0],2, ISup, HCount),
-    Hlayer = e_ann_training_handler:hidden_layer(HCount ,HSup , OCount),
-    Olayer = e_ann_training_handler:output_layer([1.0], OCount, OSup),
-    IBias = input_bias(true, IBSup, 2),
-    HBias = hidden_bias(true, HBSup, 1),
-    input_layer_activation(Ilayer, Hlayer),
-    hidden_layer_activation(Hlayer, Olayer),
+    Ilayer = e_ann_training_handler:create_input_layer([1.0,0.0],
+                                                       ICount , ISup, HCount),
+    Hlayer = e_ann_training_handler:create_hidden_layer(HCount ,HSup , OCount),
+    Olayer = e_ann_training_handler:create_output_layer([1.0], OCount, OSup),
+    IBias = input_bias(IBSup, 2),
+    HBias = hidden_bias(HBSup, 1),
+    timer:sleep(5000),
+    hidden_layer_activation_with_bias(Ilayer, Hlayer, IBias),
+    timer:sleep(10000),
+    output_layer_activation_with_bias(Hlayer, Olayer, HBias),
     e_ann_output_neuron:activate_neuron(hd(Olayer)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-input_layer_activation(Ilayer, Hlayer) ->
-    [ e_ann_input_neuron:calculate_output(Neuron, Hlayer) || Neuron <- Ilayer ].
+hidden_layer_activation_with_bias(Ilayer, Hlayer, IBias) ->
+    [ e_ann_input_neuron:calculate_output(Neuron, Hlayer) || Neuron <- Ilayer ],
+    e_ann_input_bias_neuron:calculate_output(IBias, Hlayer).
 
-hidden_layer_activation(Hlayer, Olayer) ->
+output_layer_activation_with_bias(Hlayer, Olayer, HBias) ->
     [ e_ann_hidden_neuron:activate_neuron(Neuron) || Neuron <- Hlayer ],
-    [ e_ann_hidden_neuron:calculate_output(Neuron,Olayer) || Neuron <- Hlayer ].
+    [ e_ann_hidden_neuron:calculate_output(Neuron,Olayer) || Neuron <- Hlayer ],
+    e_ann_hidden_bias_neuron:calculate_output(HBias, Olayer).
 
-output_layer(Ideal, OCount, OSup) ->
+create_output_layer(Ideal, OCount, OSup) ->
     get_output_neurons(OCount, OSup, Ideal, []).
 
-hidden_layer(HCount, HSup , OCount) ->
+create_hidden_layer(HCount, HSup , OCount) ->
     HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
-    [e_ann_hidden_neuron:init_weights(Pid, OCount) || Pid <- HiddenNeuronPids].
+    [e_ann_hidden_neuron:init_weights(Pid, OCount) || Pid <- HiddenNeuronPids],
+    HiddenNeuronPids.
 
-input_layer(TrainingData, ICount, ISup, HCount) ->
+create_input_layer(TrainingData, ICount, ISup, HCount) ->
     InputNeuronPids = get_input_neurons(ICount, ISup, TrainingData, []),
-    [e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids].
+    [e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids],
+    InputNeuronPids.
 
 get_neuron_sup_pids() ->
     [{_, IBSup, _, _}, {_, HBSup,_ ,_}, {_, HSup, _, _},
@@ -56,25 +64,15 @@ get_neuron_sup_pids() ->
      {output_sup, OSup},{input_sup, ISup}].
 
 
-input_bias(Config, Sup, Count) ->
-    case Config of
-        true ->
-            {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),
-            e_ann_input_bias_neuron:init_weights(Pid, Count),
-            Pid;
-        false ->
-            []
-    end.
+input_bias(Sup, Count) ->
+    {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),
+    e_ann_input_bias_neuron:init_weights(Pid, Count),
+    Pid.
 
-hidden_bias(Config, Sup, Count) ->
-    case Config of
-        true ->
-            {ok, Pid} = e_ann_hidden_bias_neuron_sup:add_child(Sup),
-            e_ann_hidden_bias_neuron:init_weights(Pid, Count),
-            Pid;
-        false ->
-            []
-    end.
+hidden_bias(Sup, Count) ->
+    {ok, Pid} = e_ann_hidden_bias_neuron_sup:add_child(Sup),
+    e_ann_hidden_bias_neuron:init_weights(Pid, Count),
+    Pid.
 
 get_input_neurons(0, _, [], Acc) ->
     Acc;

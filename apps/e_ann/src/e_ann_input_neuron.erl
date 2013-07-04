@@ -11,7 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, calculate_output/2, init_weights/2]).
+-export([start_link/1, calculate_output/2, init_weights/2,
+         forward_output/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -53,8 +54,7 @@ handle_call({calculate_output, TargetPids}, _From, State) ->
     Weights = State#state.weights,
     Outputs = [ Input * Weight || Weight <- Weights ],
     NewState = State#state{outputs=Outputs},
-    [ e_ann_hidden_neuron:add_input(Pid, Output) || Pid <- TargetPids,
-                                                    Output <- Outputs ],
+    forward_output(Outputs, TargetPids),
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -75,3 +75,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+forward_output([], []) ->
+    ok;
+forward_output(Outputs, TargetNeurons) ->
+    e_ann_hidden_neuron:add_input(hd(TargetNeurons), hd(Outputs)),
+    forward_output(tl(Outputs), tl(TargetNeurons)).

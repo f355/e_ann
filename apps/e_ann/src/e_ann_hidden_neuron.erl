@@ -12,7 +12,9 @@
 
 %% API
 -export([start_link/0, add_input/2, activate_neuron/1,
-         calculate_output/2, init_weights/2]).
+         calculate_output/2, init_weights/2, get_input_list/1]).
+
+-export([forward_output/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -40,6 +42,9 @@ calculate_output(NeuronPid, TargetPids) ->
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
 
+get_input_list(NeuronPid) ->
+    gen_server:call(NeuronPid, get_input_list).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -50,6 +55,8 @@ init([]) ->
     State = #state{weights=[]},
     {ok, State}.
 
+handle_call(get_input_list, _From, State) ->
+    {reply, {ok, State#state.input_list}, State};
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
@@ -60,8 +67,7 @@ handle_call({calculate_output, TargetPids}, _From, State) ->
     Weights = State#state.weights,
     Outputs = [ Input * Weight || Weight <- Weights ],
     NewState = State#state{outputs=Outputs},
-    [ e_ann_output_neuron:add_input(Pid, Output) || Pid <- TargetPids,
-                                                    Output <- Outputs],
+    forward_output(Outputs, TargetPids),
     {reply, ok, NewState};
 handle_call({add_to_input_list, Input}, _From, State) ->
     InputList = State#state.input_list,
@@ -95,3 +101,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+forward_output([], []) ->
+    ok;
+forward_output(Outputs, TargetNeurons) ->
+    e_ann_output_neuron:add_input(hd(TargetNeurons), hd(Outputs)),
+    forward_output(tl(Outputs), tl(TargetNeurons)).

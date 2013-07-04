@@ -11,7 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, add_input/2, activate_neuron/1]).
+-export([start_link/1, add_input/2, activate_neuron/1,
+        get_input_list/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -34,6 +35,8 @@ add_input(NeuronPid, Input) ->
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
 
+get_input_list(NeuronPid) ->
+    gen_server:call(NeuronPid, get_input_list).
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -44,6 +47,8 @@ init([Ideal]) ->
     State = #state{ideal_output=Ideal},
     {ok, State}.
 
+handle_call(get_input_list, _From, State) ->
+    {reply, {ok, State#state.input_list}, State};
 handle_call(activate_neuron, _From, State) ->
     Inputs = State#state.input_list,
     Activation = e_ann_math:activation(Inputs),
