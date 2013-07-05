@@ -2,7 +2,7 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% Input bias neuron for output layer with static input of 1.
+%%% Input layer bias neuron for output layer with static input of 1.
 %%% @end
 %%% Created : 02 July 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------

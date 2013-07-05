@@ -16,6 +16,8 @@
 -export([start_link/1, add_input/2, activate_neuron/1,
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
+-export([get_node_delta/1]).
+
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
@@ -48,6 +50,9 @@ calculate_error(NeuronPid) ->
 
 calculate_node_delta(NeuronPid) ->
     gen_server:call(NeuronPid, calculate_node_delta).
+
+get_node_delta(NeuronPid) ->
+    gen_server:call(NeuronPid, get_node_delta).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -90,6 +95,8 @@ handle_call({add_to_inputs, Input}, _From, State) ->
     log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
     NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
+handle_call(get_node_delta, _From, State) ->
+    {reply, State#state.node_delta, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

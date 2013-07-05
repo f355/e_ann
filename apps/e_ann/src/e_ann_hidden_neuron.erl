@@ -14,7 +14,7 @@
 -export([start_link/0, add_input/2, activate_neuron/1,
          feed_forward/2, init_weights/2, sum/1]).
 
--export([forward_output/2]).
+-export([forward_output/2, calculate_node_delta/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -50,6 +50,9 @@ init_weights(NeuronPid, Count) ->
 sum(NeuronPid) ->
     gen_server:call(NeuronPid, sum).
 
+calculate_node_delta(NeuronPid, Delta) ->
+    gen_server:call(NeuronPid, {calculate_node_delta, Delta}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -60,6 +63,13 @@ init([]) ->
     State = #state{weights=[]},
     {ok, State}.
 
+handle_call({calculate_node_delta, Delta}, _From, State) ->
+    Sum = State#state.sum,
+    Weight = hd(State#state.weights),
+    NodeDelta = e_ann_math:interior_node_delta(Sum, Delta, Weight),
+    log4erl:log(info, "(~p) node delta:~p~n", [self(), NodeDelta]),
+    NewState = State#state{node_delta=NodeDelta},
+    {reply, ok, NewState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
     Sum = lists:sum(Inputs),

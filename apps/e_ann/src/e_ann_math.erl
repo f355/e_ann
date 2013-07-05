@@ -2,9 +2,9 @@
 
 -export([mse/1, ess/1, rms/1, sigmoid/1,
          output_node_delta/2, linear_error/2,
-         hyperbolic_tangent/1, activation/1]).
+         hyperbolic_tangent/1]).
 
--export([generate_random_weights/1, interior_delta/3]).
+-export([generate_random_weights/1, interior_node_delta/3]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Global Error Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -52,12 +52,8 @@ derivative_sigmoid(Sum) ->
 output_node_delta(E, Sum) ->
     -E * derivative_sigmoid(Sum).
 
-interior_delta(Sum, Delta, Weight) ->
+interior_node_delta(Sum, Delta, Weight) ->
     derivative_sigmoid(Sum) * (Delta * Weight).
-
-activation(Inputs) ->
-    Sum = lists:sum(Inputs),
-    e_ann_math:sigmoid(Sum).
 
 generate_random_weights(Count) ->
     generate_random_weight(Count, []).

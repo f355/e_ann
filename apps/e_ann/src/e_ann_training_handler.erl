@@ -29,7 +29,8 @@ train() ->
     output_layer_activation_with_bias(Hlayer, Olayer, HBias),
     e_ann_output_neuron:activate_neuron(hd(Olayer)),
     e_ann_output_neuron:calculate_error(hd(Olayer)),
-    e_ann_output_neuron:calculate_node_delta(hd(Olayer)).
+    e_ann_output_neuron:calculate_node_delta(hd(Olayer)),
+    e_ann_output_neuron:get_node_delta(hd(Olayer)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
