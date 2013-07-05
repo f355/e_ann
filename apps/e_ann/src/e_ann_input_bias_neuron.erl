@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, calculate_output/2, init_weights/2]).
+-export([start_link/0, feed_forward/2, init_weights/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,7 +20,7 @@
 -define(SERVER, ?MODULE).
 -define(INPUT, 1).
 
--record(state, {weights=[], outputs=[]}).
+-record(state, {weights=[], feedforward_values=[]}).
 
 
 %%%===================================================================
@@ -29,8 +29,8 @@
 start_link() ->
     gen_server:start_link(?MODULE, [], []).
 
-calculate_output(NeuronPid, TargetPids) ->
-    gen_server:call(NeuronPid, {calculate_output, TargetPids}).
+feed_forward(NeuronPid, TargetPids) ->
+    gen_server:call(NeuronPid, {feed_forward, TargetPids}).
 
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
@@ -51,11 +51,11 @@ handle_call({init_weights, Count}, _From, State) ->
     NewState = State#state{weights=Weights},
     log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
-handle_call({calculate_output, TargetPids}, _From, State) ->
+handle_call({feed_forward, TargetPids}, _From, State) ->
     Weights = State#state.weights,
-    Outputs = [ ?INPUT * Weight || Weight <- Weights ],
-    NewState = State#state{outputs=Outputs},
-    e_ann_input_neuron:forward_output(Outputs, TargetPids),
+    FeedForwardValues = [ ?INPUT * Weight || Weight <- Weights ],
+    NewState = State#state{feedforward_values=FeedForwardValues},
+    e_ann_input_neuron:forward_output(FeedForwardValues, TargetPids),
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,

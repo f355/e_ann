@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, calculate_output/2, init_weights/2,
+-export([start_link/1, feed_forward/2, init_weights/2,
          forward_output/2]).
 
 %% gen_server callbacks
@@ -20,7 +20,9 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {input=0.0, weights=[], outputs=[]}).
+-record(state, {input=0.0,
+                weights=[],
+                feedforward_values=[]}).
 
 %%%===================================================================
 %%% API
@@ -28,8 +30,8 @@
 start_link(Args) ->
     gen_server:start_link(?MODULE, [Args], []).
 
-calculate_output(NeuronPid, TargetPids) ->
-    gen_server:call(NeuronPid, {calculate_output, TargetPids}).
+feed_forward(NeuronPid, TargetPids) ->
+    gen_server:call(NeuronPid, {feed_forward, TargetPids}).
 
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
@@ -49,12 +51,12 @@ handle_call({init_weights, Count}, _From, State) ->
     NewState = State#state{weights=Weights},
     log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
-handle_call({calculate_output, TargetPids}, _From, State) ->
+handle_call({feed_forward, TargetPids}, _From, State) ->
     Input = State#state.input,
     Weights = State#state.weights,
-    Outputs = [ Input * Weight || Weight <- Weights ],
-    NewState = State#state{outputs=Outputs},
-    forward_output(Outputs, TargetPids),
+    FeedForwardValues = [ Input * Weight || Weight <- Weights ],
+    NewState = State#state{feedforward_values=FeedForwardValues},
+    forward_output(FeedForwardValues, TargetPids),
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -77,6 +79,6 @@ code_change(_OldVsn, State, _Extra) ->
 
 forward_output([], []) ->
     ok;
-forward_output(Outputs, TargetNeurons) ->
-    e_ann_hidden_neuron:add_input(hd(TargetNeurons), hd(Outputs)),
-    forward_output(tl(Outputs), tl(TargetNeurons)).
+forward_output(Values, TargetNeurons) ->
+    e_ann_hidden_neuron:add_input(hd(TargetNeurons), hd(Values)),
+    forward_output(tl(Values), tl(TargetNeurons)).

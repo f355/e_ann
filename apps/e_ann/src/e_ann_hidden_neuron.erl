@@ -25,7 +25,7 @@
 -record(state, {weights=[],
                 inputs=[],
                 sum=[],
-                feedforward=[],
+                feedforward_values=[],
                 output=0.0,
                 node_delta=0.0}).
 
@@ -74,9 +74,9 @@ handle_call({init_weights, Count}, _From, State) ->
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Output = State#state.output,
     Weights = State#state.weights,
-    Feedforward = [ Output * Weight || Weight <- Weights ],
-    NewState = State#state{feedforward=Feedforward},
-    forward_output(Feedforward, TargetPids),
+    FeedForwardValues = [ Output * Weight || Weight <- Weights ],
+    NewState = State#state{feedforward_values=FeedForwardValues},
+    forward_output(FeedForwardValues, TargetPids),
     {reply, ok, NewState};
 handle_call({add_to_inputs, Input}, _From, State) ->
     Inputs = State#state.inputs,
@@ -113,6 +113,6 @@ code_change(_OldVsn, State, _Extra) ->
 
 forward_output([], []) ->
     ok;
-forward_output(Outputs, TargetNeurons) ->
-    e_ann_output_neuron:add_input(hd(TargetNeurons), hd(Outputs)),
-    forward_output(tl(Outputs), tl(TargetNeurons)).
+forward_output(Values, TargetNeurons) ->
+    e_ann_output_neuron:add_input(hd(TargetNeurons), hd(Values)),
+    forward_output(tl(Values), tl(TargetNeurons)).
