@@ -2,7 +2,7 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% Bias neuron for output layer with static input of 1.
+%%% Input bias neuron for output layer with static input of 1.
 %%% @end
 %%% Created : 02 July 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
@@ -20,7 +20,8 @@
 -define(SERVER, ?MODULE).
 -define(INPUT, 1).
 
--record(state, {weights=[], feedforward_values=[]}).
+-record(state, {weights=[],
+                feedforward_values=[]}).
 
 
 %%%===================================================================

@@ -2,7 +2,8 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%%
+%%% This module spawns input neurons that receive an input upon init.
+%%% Random weights are then assigned and feedforward commences.
 %%% @end
 %%% Created :  9 Mar 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
