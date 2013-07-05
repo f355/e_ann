@@ -2,7 +2,9 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%%
+%%% This module spawns output neurons. Output neurons calculate global
+%%% error which is used to backprobagate and update the weights in the
+%%% network.
 %%% @end
 %%% Created : 16 Mar 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
@@ -12,16 +14,19 @@
 
 %% API
 -export([start_link/1, add_input/2, activate_neuron/1,
-        get_input_list/1]).
+        sum/1, calculate_error/1, calculate_node_delta/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
-
--record(state, {global_error=0.0, ideal_output=0.0,
-                input_list=[], activation=0.0}).
+-record(state, {global_error=0.0,
+                error=0.0,
+                ideal_output=0.0,
+                inputs=[],
+                sum=0.0,
+                output=0.0,
+                node_delta=0.0}).
 
 %%%===================================================================
 %%% API
@@ -30,13 +35,20 @@ start_link(Args) ->
     gen_server:start_link(?MODULE, [Args], []).
 
 add_input(NeuronPid, Input) ->
-    gen_server:call(NeuronPid, {add_to_input_list, Input}).
+    gen_server:call(NeuronPid, {add_to_inputs, Input}).
 
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
 
-get_input_list(NeuronPid) ->
-    gen_server:call(NeuronPid, get_input_list).
+sum(NeuronPid) ->
+    gen_server:call(NeuronPid, sum).
+
+calculate_error(NeuronPid) ->
+    gen_server:call(NeuronPid, calculate_error).
+
+calculate_node_delta(NeuronPid) ->
+    gen_server:call(NeuronPid, calculate_node_delta).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -46,21 +58,37 @@ init([Ideal]) ->
                 [self(), Ideal]),
     State = #state{ideal_output=Ideal},
     {ok, State}.
-
-handle_call(get_input_list, _From, State) ->
-    {reply, {ok, State#state.input_list}, State};
-handle_call(activate_neuron, _From, State) ->
-    Inputs = State#state.input_list,
-    Activation = e_ann_math:activation(Inputs),
-    log4erl:log(info, "(~p) activated with value of:~p~n",
-                [self(), Activation]),
-    NewState = State#state{activation=Activation},
+handle_call(calculate_node_delta, _From, State) ->
+    Output = State#state.output,
+    Error = State#state.error,
+    NodeDelta = e_ann_math:output_node_delta(Error, Output),
+    log4erl:log(info, "(~p) has a node delta of:~p~n", [self(), NodeDelta]),
+    NewState = State#state{node_delta=NodeDelta},
     {reply, ok, NewState};
-handle_call({add_to_input_list, Input}, _From, State) ->
-    InputList = State#state.input_list,
-    NewInputList = [Input | InputList],
+handle_call(calculate_error, _From, State) ->
+    Output = State#state.output,
+    Ideal = State#state.ideal_output,
+    Error = e_ann_math:linear_error(Output, Ideal),
+    log4erl:log(info, "(~p) has an error of:~p~n", [self(), Error]),
+    NewState = State#state{error=Error},
+    {reply, ok, NewState};
+handle_call(sum, _From, State) ->
+    Inputs = State#state.inputs,
+    Sum = lists:sum(Inputs),
+    NewState = State#state{sum=Sum},
+    {reply, ok, NewState};
+handle_call(activate_neuron, _From, State) ->
+    Sum = State#state.sum,
+    Output = e_ann_math:sigmoid(Sum),
+    log4erl:log(info, "(~p) Output value:~p~n",
+                [self(), Output]),
+    NewState = State#state{output=Output},
+    {reply, ok, NewState};
+handle_call({add_to_inputs, Input}, _From, State) ->
+    Inputs = State#state.inputs,
+    NewInputs = [Input | Inputs],
     log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
-    NewState = State#state{input_list=NewInputList},
+    NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,

@@ -12,7 +12,7 @@
 
 %% API
 -export([start_link/0, add_input/2, activate_neuron/1,
-         calculate_output/2, init_weights/2, get_input_list/1]).
+         feed_forward/2, init_weights/2, sum/1]).
 
 -export([forward_output/2]).
 
@@ -22,7 +22,12 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {weights=[], input_list=[], outputs=[], activation=0.0}).
+-record(state, {weights=[],
+                inputs=[],
+                sum=[],
+                feedforward=[],
+                output=0.0,
+                node_delta=0.0}).
 
 %%%===================================================================
 %%% API
@@ -31,19 +36,19 @@ start_link() ->
     gen_server:start_link(?MODULE, [], []).
 
 add_input(NeuronPid, Input) ->
-    gen_server:call(NeuronPid, {add_to_input_list, Input}).
+    gen_server:call(NeuronPid, {add_to_inputs, Input}).
 
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
 
-calculate_output(NeuronPid, TargetPids) ->
-    gen_server:call(NeuronPid, {calculate_output, TargetPids}).
+feed_forward(NeuronPid, TargetPids) ->
+    gen_server:call(NeuronPid, {feed_forward, TargetPids}).
 
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
 
-get_input_list(NeuronPid) ->
-    gen_server:call(NeuronPid, get_input_list).
+sum(NeuronPid) ->
+    gen_server:call(NeuronPid, sum).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -55,32 +60,36 @@ init([]) ->
     State = #state{weights=[]},
     {ok, State}.
 
-handle_call(get_input_list, _From, State) ->
-    {reply, {ok, State#state.input_list}, State};
+handle_call(sum, _From, State) ->
+    Inputs = State#state.inputs,
+    Sum = lists:sum(Inputs),
+    log4erl:log(info, "(~p) sum:~p~n", [self(), Sum]),
+    NewState = State#state{sum=Sum},
+    {reply, ok, NewState};
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
     log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
-handle_call({calculate_output, TargetPids}, _From, State) ->
-    Input = State#state.activation,
+handle_call({feed_forward, TargetPids}, _From, State) ->
+    Output = State#state.output,
     Weights = State#state.weights,
-    Outputs = [ Input * Weight || Weight <- Weights ],
-    NewState = State#state{outputs=Outputs},
-    forward_output(Outputs, TargetPids),
+    Feedforward = [ Output * Weight || Weight <- Weights ],
+    NewState = State#state{feedforward=Feedforward},
+    forward_output(Feedforward, TargetPids),
     {reply, ok, NewState};
-handle_call({add_to_input_list, Input}, _From, State) ->
-    InputList = State#state.input_list,
-    NewInputList = [Input | InputList],
+handle_call({add_to_inputs, Input}, _From, State) ->
+    Inputs = State#state.inputs,
+    NewInputs = [Input | Inputs],
     log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
-    NewState = State#state{input_list=NewInputList},
+    NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
-    Inputs = State#state.input_list,
-    Activation = e_ann_math:activation(Inputs),
-    log4erl:log(info, "(~p) activated with value of:~p~n",
-                [self(), Activation]),
-    NewState = State#state{activation=Activation},
+    Sum = State#state.sum,
+    Output = e_ann_math:sigmoid(Sum),
+    log4erl:log(info, "(~p) Output value:~p~n",
+                [self(), Output]),
+    NewState = State#state{output=Output},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
