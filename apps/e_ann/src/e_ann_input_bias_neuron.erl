@@ -41,8 +41,7 @@ init_weights(NeuronPid, Count) ->
 %%%===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting ~p Input bias neuron ~n",
-		[self()]),
+    log4erl:info("Starting input bias neuron with pid:(~p)~n", [self()]),
     State = #state{weights=[]},
     {ok, State}.
 
@@ -50,7 +49,7 @@ init([]) ->
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
-    log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
+    log4erl:info("Neuron (~p) initialized weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Weights = State#state.weights,

@@ -58,8 +58,7 @@ calculate_node_delta(NeuronPid, Delta) ->
 %%%===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting (~p) Hidden neuron~n",
-                [self()]),
+    log4erl:log("Starting hidden neuron with pid:~p~n", [self()]),
     State = #state{weights=[]},
     {ok, State}.
 
@@ -67,19 +66,19 @@ handle_call({calculate_node_delta, Delta}, _From, State) ->
     Sum = State#state.sum,
     Weight = hd(State#state.weights),
     NodeDelta = e_ann_math:interior_node_delta(Sum, Delta, Weight),
-    log4erl:log(info, "(~p) node delta:~p~n", [self(), NodeDelta]),
+    log4erl:info("Neuron (~p) node delta:~p~n", [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
     {reply, ok, NewState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
     Sum = lists:sum(Inputs),
-    log4erl:log(info, "(~p) sum:~p~n", [self(), Sum]),
+    log4erl:info("Neuron (~p) sum:~p~n", [self(), Sum]),
     NewState = State#state{sum=Sum},
     {reply, ok, NewState};
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
-    log4erl:log(info, "(~p) initialized with weights ~p~n",[self(), Weights]),
+    log4erl:info("Neuron (~p) initialized weights ~p~n",[self(), Weights]),
     {reply, ok, NewState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Output = State#state.output,
@@ -91,13 +90,13 @@ handle_call({feed_forward, TargetPids}, _From, State) ->
 handle_call({add_to_inputs, Input}, _From, State) ->
     Inputs = State#state.inputs,
     NewInputs = [Input | Inputs],
-    log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
+    log4erl:info("Neuron (~p) added ~p to inputs~n",[self(), Input]),
     NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
     Output = e_ann_math:sigmoid(Sum),
-    log4erl:log(info, "(~p) Output value:~p~n",
+    log4erl:info("Neuron (~p) output value:~p~n",
                 [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};

@@ -28,8 +28,8 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting e_ann_input_bias_neuron supervisor (~p)~n",
-                [self()]),
+    log4erl:info("Starting input_bias_neuron supervisor with pid:(~p)~n",
+                 [self()]),
     RestartStrategy = {simple_one_for_one, 0, 1},
     Children = [child(e_ann_input_bias_neuron)],
     {ok, {RestartStrategy, Children}}.

@@ -28,7 +28,7 @@ start_link() ->
 %% ===================================================================
 
 init(_Args) ->
-    log4erl:log(info, "Starting e_ann supervisor (~p)~n", [self()]),
+    log4erl:info("Starting e_ann supervisor with pid:(~p)~n", [self()]),
     RestartStrategy = {one_for_one, 5, 10},
     Supervisors = [child(e_ann_input_neuron_sup),
                    child(e_ann_output_neuron_sup),

@@ -30,7 +30,8 @@ train() ->
     e_ann_output_neuron:activate_neuron(hd(Olayer)),
     e_ann_output_neuron:calculate_error(hd(Olayer)),
     e_ann_output_neuron:calculate_node_delta(hd(Olayer)),
-    e_ann_output_neuron:get_node_delta(hd(Olayer)).
+    Delta = e_ann_output_neuron:get_node_delta(hd(Olayer)),
+    [ e_ann_hidden_neuron:calculate_node_delta(Neuron, Delta) || Neuron <- Hlayer ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,7 +43,7 @@ hidden_layer_activation_with_bias(Ilayer, Hlayer, IBias) ->
 output_layer_activation_with_bias(Hlayer, Olayer, HBias) ->
     [ e_ann_hidden_neuron:sum(Neuron) || Neuron <- Hlayer],
     [ e_ann_hidden_neuron:activate_neuron(Neuron) || Neuron <- Hlayer ],
-    [ e_ann_hidden_neuron:feed_forward(Neuron,Olayer) || Neuron <- Hlayer ],
+    [ e_ann_hidden_neuron:feed_forward(Neuron, Olayer) || Neuron <- Hlayer ],
     e_ann_hidden_bias_neuron:feed_forward(HBias, Olayer).
 
 create_output_layer(Ideal, OCount, OSup) ->

@@ -28,7 +28,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    log4erl:log(info, "Starting e_ann_output_neuron supervisor (~p)~n",
+    log4erl:info("Starting output_neuron supervisor with pid:(~p)~n",
                 [self()]),
     RestartStrategy = {simple_one_for_one, 0, 1},
     Children = [child(e_ann_output_neuron, [])],

@@ -59,7 +59,7 @@ get_node_delta(NeuronPid) ->
 %%%===================================================================
 
 init([Ideal]) ->
-    log4erl:log(info, "Starting (~p) output neuron ideal output of:~p~n",
+    log4erl:info("Starting output neuron with pid:(~p) and ideal output of:~p~n",
                 [self(), Ideal]),
     State = #state{ideal_output=Ideal},
     {ok, State}.
@@ -67,14 +67,13 @@ handle_call(calculate_node_delta, _From, State) ->
     Output = State#state.output,
     Error = State#state.error,
     NodeDelta = e_ann_math:output_node_delta(Error, Output),
-    log4erl:log(info, "(~p) has a node delta of:~p~n", [self(), NodeDelta]),
+    log4erl:info("Neuron (~p) has a node delta of:~p~n", [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
     {reply, ok, NewState};
 handle_call(calculate_error, _From, State) ->
     Output = State#state.output,
     Ideal = State#state.ideal_output,
     Error = e_ann_math:linear_error(Output, Ideal),
-    log4erl:log(info, "(~p) has an error of:~p~n", [self(), Error]),
     NewState = State#state{error=Error},
     {reply, ok, NewState};
 handle_call(sum, _From, State) ->
@@ -85,14 +84,13 @@ handle_call(sum, _From, State) ->
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
     Output = e_ann_math:sigmoid(Sum),
-    log4erl:log(info, "(~p) Output value:~p~n",
-                [self(), Output]),
+    log4erl:info("Neuron (~p) output:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};
 handle_call({add_to_inputs, Input}, _From, State) ->
     Inputs = State#state.inputs,
     NewInputs = [Input | Inputs],
-    log4erl:log(info, "(~p) added ~p to input_list~n",[self(), Input]),
+    log4erl:info("Neuron (~p) added ~p to inputs~n",[self(), Input]),
     NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
 handle_call(get_node_delta, _From, State) ->
