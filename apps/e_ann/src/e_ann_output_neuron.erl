@@ -59,7 +59,7 @@ get_node_delta(NeuronPid) ->
 %%%===================================================================
 
 init([Ideal]) ->
-    log4erl:info("Starting output neuron with pid:(~p) and ideal output of:~p~n",
+    log4erl:info("Starting output neuron with pid:(~p) - ideal output:~p~n",
                 [self(), Ideal]),
     State = #state{ideal_output=Ideal},
     {ok, State}.

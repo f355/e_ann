@@ -47,7 +47,7 @@ init([]) ->
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
-    log4erl:log(info, "Neuron (~p) initialized weights ~p~n",[self(), Weights]),
+    log4erl:info("Neuron (~p) initialized weights ~p~n", [self(), Weights]),
     {reply, ok, NewState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Weights = State#state.weights,

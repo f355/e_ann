@@ -96,8 +96,7 @@ handle_call({add_to_inputs, Input}, _From, State) ->
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
     Output = e_ann_math:sigmoid(Sum),
-    log4erl:info("Neuron (~p) output value:~p~n",
-                [self(), Output]),
+    log4erl:info("Neuron (~p) output value:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
