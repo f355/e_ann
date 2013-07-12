@@ -25,26 +25,35 @@ train() ->
     Olayer = e_ann_training_handler:create_output_layer([1.0], OCount, OSup),
     IBias = input_bias(IBSup, 2),
     HBias = hidden_bias(HBSup, 1),
-    hidden_layer_activation_with_bias(Ilayer, Hlayer, IBias),
-    output_layer_activation_with_bias(Hlayer, Olayer, HBias),
-    e_ann_output_neuron:activate_neuron(hd(Olayer)),
-    e_ann_output_neuron:calculate_error(hd(Olayer)),
-    e_ann_output_neuron:calculate_node_delta(hd(Olayer)),
-    Delta = e_ann_output_neuron:get_node_delta(hd(Olayer)),
-    [ e_ann_hidden_neuron:calculate_node_delta(Neuron, Delta) || Neuron <- Hlayer ].
+    feed_forward_input_layer_with_bias(Ilayer, Hlayer, IBias),
+    feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
+    Olayer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-hidden_layer_activation_with_bias(Ilayer, Hlayer, IBias) ->
-    [ e_ann_input_neuron:feed_forward(Neuron, Hlayer) || Neuron <- Ilayer ],
-    e_ann_input_bias_neuron:feed_forward(IBias, Hlayer).
 
-output_layer_activation_with_bias(Hlayer, Olayer, HBias) ->
-    [ e_ann_hidden_neuron:sum(Neuron) || Neuron <- Hlayer],
+%% Create funs for feed_forward and back propagation.
+feed_forward_input_layer_with_bias(Ilayer, Layer, IBias) ->
+    [ e_ann_input_neuron:feed_forward(Neuron, Layer) || Neuron <- Ilayer ],
+    e_ann_input_bias_neuron:feed_forward(IBias, Layer).
+
+feed_forward_hidden_layer_with_bias(Hlayer, Layer, HBias) ->
+    [ e_ann_hidden_neuron:sum(Neuron) || Neuron <- Hlayer ],
     [ e_ann_hidden_neuron:activate_neuron(Neuron) || Neuron <- Hlayer ],
-    [ e_ann_hidden_neuron:feed_forward(Neuron, Olayer) || Neuron <- Hlayer ],
-    e_ann_hidden_bias_neuron:feed_forward(HBias, Olayer).
+    [ e_ann_hidden_neuron:feed_forward(Neuron, Layer) || Neuron <- Hlayer ],
+    e_ann_hidden_bias_neuron:feed_forward(HBias, Layer).
+
+backpropagation_output_layer(_Olayer, _Layer) ->
+  ok.
+
+output_neuron_activation(Neuron) ->
+    e_ann_output_neuron:sum(Neuron),
+    e_ann_output_neuron:activate_neuron(Neuron).
+
+calculate_output_neuron_delta(Neuron) ->
+    e_ann_output_neuron:calculate_error(Neuron),
+    e_ann_output_neuron:calculate_node_delta(Neuron).
 
 create_output_layer(Ideal, OCount, OSup) ->
     get_output_neurons(OCount, OSup, Ideal, []).

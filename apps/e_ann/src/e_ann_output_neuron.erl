@@ -74,11 +74,13 @@ handle_call(calculate_error, _From, State) ->
     Output = State#state.output,
     Ideal = State#state.ideal_output,
     Error = e_ann_math:linear_error(Output, Ideal),
+    log4erl:info("Neuron (~p) has an error vs ideal of:~p~n",[self(), Error]),
     NewState = State#state{error=Error},
     {reply, ok, NewState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
     Sum = lists:sum(Inputs),
+    log4erl:info("Neuron (~p) sum:~p~n", [self(), Sum]),
     NewState = State#state{sum=Sum},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
