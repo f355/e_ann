@@ -15,7 +15,7 @@
 -export([start_link/1, add_input/2, activate_neuron/1,
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
--export([get_node_delta/1, backpropagate/2]).
+-export([get_node_delta/1, backpropagate_with_bias/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -53,8 +53,8 @@ calculate_node_delta(NeuronPid) ->
 get_node_delta(NeuronPid) ->
     gen_server:call(NeuronPid, get_node_delta).
 
-backpropagate(NeuronPid, Layer) ->
-    gen_server:call(NeuronPid, {backpropagate, Layer}).
+backpropagate_with_bias(NeuronPid, Layer, HBias) ->
+    gen_server:call(NeuronPid, {backpropagate, Layer, HBias}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -101,9 +101,11 @@ handle_call({add_to_inputs, Input}, _From, State) ->
     {reply, ok, NewState};
 handle_call(get_node_delta, _From, State) ->
     {reply, State#state.node_delta, State};
-handle_call({backpropagate, Layer}, _From, State) ->
+handle_call({backpropagate, Layer, HBias}, _From, State) ->
     Delta = State#state.node_delta,
     [ e_ann_hidden_neuron:calculate_node_delta(Pid ,Delta) || Pid <- Layer ],
+    [ e_ann_hidden_neuron:calculate_gradient(Pid, Delta) || Pid <- Layer ],
+    e_ann_hidden_bias_neuron:calculate_gradient(HBias, Delta),
     {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,

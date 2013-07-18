@@ -27,7 +27,8 @@ train() ->
     HBias = hidden_bias(HBSup, 1),
     feed_forward_input_layer_with_bias(Ilayer, Hlayer, IBias),
     feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
-    backpropagation_output_layer(Olayer, Hlayer).
+    backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
+    backpropagaion_hidden_layer_with_bias(Hlayer, Ilayer, IBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -44,10 +45,15 @@ feed_forward_hidden_layer_with_bias(Hlayer, Layer, HBias) ->
     [ e_ann_hidden_neuron:feed_forward(Neuron, Layer) || Neuron <- Hlayer ],
     e_ann_hidden_bias_neuron:feed_forward(HBias, Layer).
 
-backpropagation_output_layer(Olayer, Layer) ->
+backpropagation_output_layer_with_bias(Olayer, Layer, Hbias) ->
     [ output_neuron_activation(Neuron) || Neuron <- Olayer ],
     [ calculate_output_neuron_delta(Neuron) || Neuron <- Olayer ],
-    [ e_ann_output_neuron:backpropagate(Neuron, Layer) || Neuron <- Olayer ].
+    [ e_ann_output_neuron:backpropagate_with_bias(Neuron, Layer, Hbias)
+     || Neuron <- Olayer ].
+
+backpropagaion_hidden_layer_with_bias(Hlayer, Ilayer, IBias) ->
+    [ e_ann_hidden_neuron:backpropagate_with_bias(Neuron, Ilayer, IBias) ||
+        Neuron <- Hlayer ].
 
 output_neuron_activation(Neuron) ->
     e_ann_output_neuron:sum(Neuron),
@@ -76,7 +82,6 @@ get_neuron_sup_pids() ->
         supervisor:which_children(?MAINSUPERVISOR),
     [{input_bias_sup, IBSup},{hidden_bias_sup, HBSup}, {hidden_sup, HSup},
      {output_sup, OSup},{input_sup, ISup}].
-
 
 input_bias(Sup, Count) ->
     {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),

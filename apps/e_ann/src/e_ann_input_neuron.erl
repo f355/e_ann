@@ -13,7 +13,7 @@
 
 %% API
 -export([start_link/1, feed_forward/2, init_weights/2,
-         forward_output/2]).
+         forward_output/2, calculate_gradient/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -38,6 +38,9 @@ feed_forward(NeuronPid, TargetPids) ->
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
 
+calculate_gradient(NeuronPid, Delta) ->
+    gen_server:call(NeuronPid, {calculate_gradient, Delta}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -60,6 +63,12 @@ handle_call({feed_forward, TargetPids}, _From, State) ->
     FeedForwardValues = [ Input * Weight || Weight <- Weights ],
     NewState = State#state{feedforward_values=FeedForwardValues},
     forward_output(FeedForwardValues, TargetPids),
+    {reply, ok, NewState};
+handle_call({calculate_gradient, Delta}, _From, State) ->
+    Input = State#state.input,
+    Gradient = Input * Delta,
+    log4erl:info("Input neuron (~p) gradient:~p~n", [self(), Gradient]),
+    NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.

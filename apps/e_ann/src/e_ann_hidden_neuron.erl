@@ -14,7 +14,8 @@
 -export([start_link/0, add_input/2, activate_neuron/1,
          feed_forward/2, init_weights/2, sum/1]).
 
--export([forward_output/2, calculate_node_delta/2]).
+-export([forward_output/2, calculate_node_delta/2,
+         calculate_gradient/2, backpropagate_with_bias/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -54,6 +55,12 @@ sum(NeuronPid) ->
 calculate_node_delta(NeuronPid, Delta) ->
     gen_server:call(NeuronPid, {calculate_node_delta, Delta}).
 
+calculate_gradient(NeuronPid, Delta) ->
+    gen_server:call(NeuronPid, {calculate_gradient, Delta}).
+
+backpropagate_with_bias(NeuronPid, Layer, IBias) ->
+    gen_server:call(NeuronPid, {backpropagate, Layer, IBias}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -69,6 +76,12 @@ handle_call({calculate_node_delta, Delta}, _From, State) ->
     NodeDelta = e_ann_math:interior_node_delta(Sum, Delta, Weight),
     log4erl:info("Hidden neuron (~p) node delta:~p~n", [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
+    {reply, ok, NewState};
+handle_call({calculate_gradient, Delta}, _From, State) ->
+    Output = State#state.output,
+    Gradient = Output * Delta,
+    log4erl:info("Hidden neuron (~p) gradient:~p~n", [self(), Gradient]),
+    NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
@@ -101,6 +114,11 @@ handle_call(activate_neuron, _From, State) ->
     log4erl:info("Hidden neuron (~p) output value:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};
+handle_call({backpropagate, Layer, IBias}, _From, State) ->
+    Delta = State#state.node_delta,
+    [ e_ann_input_neuron:calculate_gradient(Pid, Delta) || Pid <- Layer ],
+    e_ann_input_bias_neuron:calculate_gradient(IBias, Delta),
+    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

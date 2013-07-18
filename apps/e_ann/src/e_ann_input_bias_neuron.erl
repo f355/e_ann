@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, feed_forward/2, init_weights/2]).
+-export([start_link/0, feed_forward/2, init_weights/2, calculate_gradient/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -24,7 +24,6 @@
                 feedforward_values=[],
                 gradient=0.0}).
 
-
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -36,6 +35,9 @@ feed_forward(NeuronPid, TargetPids) ->
 
 init_weights(NeuronPid, Count) ->
     gen_server:call(NeuronPid, {init_weights, Count}).
+
+calculate_gradient(NeuronPid, Delta) ->
+    gen_server:call(NeuronPid, {calculate_gradient, Delta}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -58,6 +60,11 @@ handle_call({feed_forward, TargetPids}, _From, State) ->
     FeedForwardValues = [ ?INPUT * Weight || Weight <- Weights ],
     NewState = State#state{feedforward_values=FeedForwardValues},
     e_ann_input_neuron:forward_output(FeedForwardValues, TargetPids),
+    {reply, ok, NewState};
+handle_call({calculate_gradient, Delta}, _From, State) ->
+    Gradient = ?INPUT * Delta,
+    log4erl:info("Input bias neuron (~p) gradient:~p~n", [self(), Gradient]),
+    NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
