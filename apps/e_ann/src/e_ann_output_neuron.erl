@@ -2,9 +2,8 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% This module spawns output neurons. Output neurons calculate global
-%%% error which is used to backprobagate and update the weights in the
-%%% network.
+%%% This module spawns output neurons. After a output neuron has calculated
+%%% it's own node delta it initiates backpropagation.
 %%% @end
 %%% Created : 16 Mar 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
@@ -16,7 +15,7 @@
 -export([start_link/1, add_input/2, activate_neuron/1,
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
--export([get_node_delta/1]).
+-export([get_node_delta/1, backpropagate/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -54,6 +53,9 @@ calculate_node_delta(NeuronPid) ->
 get_node_delta(NeuronPid) ->
     gen_server:call(NeuronPid, get_node_delta).
 
+backpropagate(NeuronPid, Layer) ->
+    gen_server:call(NeuronPid, {backpropagate, Layer}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -67,36 +69,42 @@ handle_call(calculate_node_delta, _From, State) ->
     Output = State#state.output,
     Error = State#state.error,
     NodeDelta = e_ann_math:output_node_delta(Error, Output),
-    log4erl:info("Neuron (~p) has a node delta of:~p~n", [self(), NodeDelta]),
+    log4erl:info("Output neuron (~p) has a node delta of:~p~n",
+                 [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
     {reply, ok, NewState};
 handle_call(calculate_error, _From, State) ->
     Output = State#state.output,
     Ideal = State#state.ideal_output,
     Error = e_ann_math:linear_error(Output, Ideal),
-    log4erl:info("Neuron (~p) has an error vs ideal of:~p~n",[self(), Error]),
+    log4erl:info("Output neuron (~p) has an error vs ideal of:~p~n",
+                 [self(), Error]),
     NewState = State#state{error=Error},
     {reply, ok, NewState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
     Sum = lists:sum(Inputs),
-    log4erl:info("Neuron (~p) sum:~p~n", [self(), Sum]),
+    log4erl:info("Output neuron (~p) sum:~p~n", [self(), Sum]),
     NewState = State#state{sum=Sum},
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
     Output = e_ann_math:sigmoid(Sum),
-    log4erl:info("Neuron (~p) output:~p~n", [self(), Output]),
+    log4erl:info("Output neuron (~p) output:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};
 handle_call({add_to_inputs, Input}, _From, State) ->
     Inputs = State#state.inputs,
     NewInputs = [Input | Inputs],
-    log4erl:info("Neuron (~p) added ~p to inputs~n",[self(), Input]),
+    log4erl:info("Output neuron (~p) added ~p to inputs~n",[self(), Input]),
     NewState = State#state{inputs=NewInputs},
     {reply, ok, NewState};
 handle_call(get_node_delta, _From, State) ->
     {reply, State#state.node_delta, State};
+handle_call({backpropagate, Layer}, _From, State) ->
+    Delta = State#state.node_delta,
+    [ e_ann_hidden_neuron:calculate_node_delta(Pid ,Delta) || Pid <- Layer ],
+    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

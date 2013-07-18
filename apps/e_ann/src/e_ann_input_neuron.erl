@@ -23,6 +23,7 @@
 
 -record(state, {input=0.0,
                 weights=[],
+                gradient=0.0,
                 feedforward_values=[]}).
 
 %%%===================================================================
@@ -50,7 +51,8 @@ init([Input]) ->
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     NewState = State#state{weights=Weights},
-    log4erl:info("Neuron (~p) initialized weights ~p~n",[self(), Weights]),
+    log4erl:info("Input neuron (~p) initialized weights ~p~n",
+                 [self(), Weights]),
     {reply, ok, NewState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Input = State#state.input,

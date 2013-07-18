@@ -20,7 +20,9 @@
 -define(SERVER, ?MODULE).
 -define(INPUT, 1).
 
--record(state, {weights=[], feedforward_values=[]}).
+-record(state, {weights=[],
+                feedforward_values=[],
+                gradient=0.0}).
 
 
 %%%===================================================================
