@@ -20,21 +20,20 @@ train() ->
     HCount = 2,
     OCount = 1,
     Ilayer = e_ann_training_handler:create_input_layer([1.0,0.0],
-                                                       ICount , ISup, HCount),
-    Hlayer = e_ann_training_handler:create_hidden_layer(HCount ,HSup , OCount),
+                                                       ICount, ISup, HCount),
+    Hlayer = e_ann_training_handler:create_hidden_layer(HCount, HSup , OCount),
     Olayer = e_ann_training_handler:create_output_layer([1.0], OCount, OSup),
     IBias = input_bias(IBSup, 2),
     HBias = hidden_bias(HBSup, 1),
     feed_forward_input_layer_with_bias(Ilayer, Hlayer, IBias),
     feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
     backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
-    backpropagaion_hidden_layer_with_bias(Hlayer, Ilayer, IBias).
+    backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Create funs for feed_forward and back propagation.
 feed_forward_input_layer_with_bias(Ilayer, Layer, IBias) ->
     [ e_ann_input_neuron:feed_forward(Neuron, Layer) || Neuron <- Ilayer ],
     e_ann_input_bias_neuron:feed_forward(IBias, Layer).
@@ -51,7 +50,7 @@ backpropagation_output_layer_with_bias(Olayer, Layer, Hbias) ->
     [ e_ann_output_neuron:backpropagate_with_bias(Neuron, Layer, Hbias)
      || Neuron <- Olayer ].
 
-backpropagaion_hidden_layer_with_bias(Hlayer, Ilayer, IBias) ->
+backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias) ->
     [ e_ann_hidden_neuron:backpropagate_with_bias(Neuron, Ilayer, IBias) ||
         Neuron <- Hlayer ].
 
@@ -66,14 +65,14 @@ calculate_output_neuron_delta(Neuron) ->
 create_output_layer(Ideal, OCount, OSup) ->
     get_output_neurons(OCount, OSup, Ideal, []).
 
-create_hidden_layer(HCount, HSup , OCount) ->
-    HiddenNeuronPids = get_hidden_neurons(HCount, HSup, []),
-    [e_ann_hidden_neuron:init_weights(Pid, OCount) || Pid <- HiddenNeuronPids],
+create_hidden_layer(HCnt, HSup , OCnt) ->
+    HiddenNeuronPids = get_hidden_neurons(HCnt, HSup, []),
+    [ e_ann_hidden_neuron:init_weights(Pid, OCnt) || Pid <- HiddenNeuronPids ],
     HiddenNeuronPids.
 
 create_input_layer(TrainingData, ICount, ISup, HCount) ->
     InputNeuronPids = get_input_neurons(ICount, ISup, TrainingData, []),
-    [e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids],
+    [ e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids ],
     InputNeuronPids.
 
 get_neuron_sup_pids() ->

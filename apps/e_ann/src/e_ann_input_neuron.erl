@@ -47,7 +47,7 @@ calculate_gradient(NeuronPid, Delta) ->
 
 init([Input]) ->
     log4erl:info("Starting input neuron with pid:(~p) and input:~p ~n",
-		[self(), Input]),
+                 [self(), Input]),
     State = #state{input=Input},
     {ok, State}.
 
