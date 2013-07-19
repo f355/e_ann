@@ -11,7 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, feed_forward/2, init_weights/2, calculate_gradient/2]).
+-export([start_link/0, feed_forward/2, init_weights/2,
+         calculate_gradient/2, update_weights/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -22,6 +23,7 @@
 
 -record(state, {weights=[],
                 feedforward_values=[],
+                weight_deltas=[],
                 gradient=0.0}).
 
 %%%===================================================================
@@ -39,6 +41,9 @@ init_weights(NeuronPid, Count) ->
 calculate_gradient(NeuronPid, Delta) ->
     gen_server:call(NeuronPid, {calculate_gradient, Delta}).
 
+update_weights(NeuronPid, LearningRate, Momentum) ->
+    gen_server:call(NeuronPid, {update_weights, LearningRate, Momentum}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -48,13 +53,14 @@ init([]) ->
     State = #state{weights=[]},
     {ok, State}.
 
-
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
+    WeightDeltas = e_ann_math:init_weight_deltas(Count),
     NewState = State#state{weights=Weights},
+    FinalState = NewState#state{weight_deltas=WeightDeltas},
     log4erl:info("Input bias neuron (~p) initialized weights ~p~n",
                  [self(), Weights]),
-    {reply, ok, NewState};
+    {reply, ok, FinalState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Weights = State#state.weights,
     FeedForwardValues = [ ?INPUT * Weight || Weight <- Weights ],
@@ -66,6 +72,18 @@ handle_call({calculate_gradient, Delta}, _From, State) ->
     log4erl:info("Input bias neuron (~p) gradient:~p~n", [self(), Gradient]),
     NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
+handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
+    Gradient = State#state.gradient,
+    WeightDeltas = State#state.weight_deltas,
+    Weights = State#state.weights,
+    NewWeightDeltas = [ (Gradient * LearningRate) + (Weight * Momentum) ||
+                       Weight <- WeightDeltas ],
+    UpdatedWeights = e_ann_math:update_weights(Weights, NewWeightDeltas),
+    log4erl:info("Input bias neuron (~p) updated weights:~p~n",
+                 [self(), UpdatedWeights]),
+    NewState = State#state{weight_deltas=NewWeightDeltas},
+    FinalState = NewState#state{weights=UpdatedWeights},
+    {reply, ok, FinalState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

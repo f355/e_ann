@@ -19,6 +19,8 @@ train() ->
     ICount = 2,
     HCount = 2,
     OCount = 1,
+    Momentum = 0.3,
+    LearningRate = 0.7,
     Ilayer = e_ann_training_handler:create_input_layer([1.0,0.0],
                                                        ICount, ISup, HCount),
     Hlayer = e_ann_training_handler:create_hidden_layer(HCount, HSup , OCount),
@@ -28,7 +30,9 @@ train() ->
     feed_forward_input_layer_with_bias(Ilayer, Hlayer, IBias),
     feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
     backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
-    backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias).
+    backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
+    update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
+    update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -53,6 +57,16 @@ backpropagation_output_layer_with_bias(Olayer, Layer, Hbias) ->
 backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias) ->
     [ e_ann_hidden_neuron:backpropagate_with_bias(Neuron, Ilayer, IBias) ||
         Neuron <- Hlayer ].
+
+update_weights_input_layer_with_bias(Ilayer, Ibias, LearningRate, Momentum) ->
+    [ e_ann_input_neuron:update_weights(Neuron, LearningRate, Momentum) ||
+        Neuron <- Ilayer ],
+    e_ann_input_bias_neuron:update_weights(Ibias, LearningRate, Momentum).
+
+update_weights_hidden_layer_with_bias(Hlayer, HBias, LearningRate, Momentum) ->
+    [ e_ann_hidden_neuron:update_weights(Neuron, LearningRate, Momentum) ||
+        Neuron <- Hlayer ],
+    e_ann_hidden_bias_neuron:update_weights(HBias, LearningRate, Momentum).
 
 output_neuron_activation(Neuron) ->
     e_ann_output_neuron:sum(Neuron),

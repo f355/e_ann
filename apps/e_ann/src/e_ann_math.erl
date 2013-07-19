@@ -4,7 +4,8 @@
          output_node_delta/2, linear_error/2,
          hyperbolic_tangent/1]).
 
--export([generate_random_weights/1, interior_node_delta/3]).
+-export([generate_random_weights/1, interior_node_delta/3,
+         init_weight_deltas/1, update_weights/2]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Global Error Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -38,7 +39,7 @@ hyperbolic_tangent(N) ->
     (math:exp(2*N) - 1) / (math:exp(2*N) + 1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Misc Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Misc Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 linear_error(Actual, Ideal) ->
     Actual - Ideal.
@@ -72,3 +73,10 @@ generate_random_weight(Count, Acc) ->
             Acc2 = [Weight | Acc],
             generate_random_weight(Count - 1, Acc2)
     end.
+
+init_weight_deltas(Count) ->
+    lists:duplicate(Count, 0.0).
+
+update_weights(Weights, WeightDeltas) ->
+    Combine = fun(X, Y) -> X + Y end,
+    lists:zipwith(Combine, Weights, WeightDeltas).

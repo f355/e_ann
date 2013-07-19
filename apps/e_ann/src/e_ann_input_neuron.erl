@@ -13,7 +13,7 @@
 
 %% API
 -export([start_link/1, feed_forward/2, init_weights/2,
-         forward_output/2, calculate_gradient/2]).
+         forward_output/2, calculate_gradient/2, update_weights/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -24,6 +24,7 @@
 -record(state, {input=0.0,
                 weights=[],
                 gradient=0.0,
+                weight_deltas=[],
                 feedforward_values=[]}).
 
 %%%===================================================================
@@ -41,22 +42,27 @@ init_weights(NeuronPid, Count) ->
 calculate_gradient(NeuronPid, Delta) ->
     gen_server:call(NeuronPid, {calculate_gradient, Delta}).
 
+update_weights(NeuronPid, LearningRate, Momentum) ->
+    gen_server:call(NeuronPid, {update_weights, LearningRate, Momentum}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
 init([Input]) ->
-    log4erl:info("Starting input neuron with pid:(~p) and input:~p ~n",
+     log4erl:info("Starting input neuron with pid:(~p) and input:~p ~n",
                  [self(), Input]),
     State = #state{input=Input},
     {ok, State}.
 
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
+    WeightDeltas = e_ann_math:init_weight_deltas(Count),
     NewState = State#state{weights=Weights},
-    log4erl:info("Input neuron (~p) initialized weights ~p~n",
+    FinalState = NewState#state{weight_deltas=WeightDeltas},
+    log4erl:info("Input neuron (~p) initialized weights~p~n",
                  [self(), Weights]),
-    {reply, ok, NewState};
+    {reply, ok, FinalState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Input = State#state.input,
     Weights = State#state.weights,
@@ -70,6 +76,18 @@ handle_call({calculate_gradient, Delta}, _From, State) ->
     log4erl:info("Input neuron (~p) gradient:~p~n", [self(), Gradient]),
     NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
+handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
+    Gradient = State#state.gradient,
+    WeightDeltas = State#state.weight_deltas,
+    Weights = State#state.weights,
+    NewWeightDeltas = [ (Gradient * LearningRate) + (Weight * Momentum) ||
+                       Weight <- WeightDeltas ],
+    UpdatedWeights = e_ann_math:update_weights(Weights, NewWeightDeltas),
+    log4erl:info("Input neuron (~p) updated weights:~p~n",
+                 [self(), UpdatedWeights]),
+    NewState = State#state{weight_deltas=NewWeightDeltas},
+    FinalState = NewState#state{weights=UpdatedWeights},
+    {reply, ok, FinalState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
