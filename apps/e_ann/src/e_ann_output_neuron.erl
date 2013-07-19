@@ -21,7 +21,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(state, {global_error=0.0,
+-record(state, {global_error=[],
                 error=0.0,
                 ideal_output=0.0,
                 inputs=[],
@@ -76,11 +76,15 @@ handle_call(calculate_node_delta, _From, State) ->
 handle_call(calculate_error, _From, State) ->
     Output = State#state.output,
     Ideal = State#state.ideal_output,
+    GlobalErrs = State#state.global_error,
     Error = e_ann_math:linear_error(Output, Ideal),
-    log4erl:info("Output neuron (~p) has an error vs ideal of:~p~n",
-                 [self(), Error]),
-    NewState = State#state{error=Error},
-    {reply, ok, NewState};
+    NewGlobalErrs = [Error | GlobalErrs],
+    GlobalError = e_ann_math:mse(NewGlobalErrs),
+    log4erl:info("Output neuron (~p) has a global error of:~p~n",
+                 [self(), GlobalError]),
+    NewState = State#state{global_error=GlobalError},
+    FinalState = NewState#state{error=Error},
+    {reply, ok, FinalState};
 handle_call(sum, _From, State) ->
     Inputs = State#state.inputs,
     Sum = lists:sum(Inputs),
