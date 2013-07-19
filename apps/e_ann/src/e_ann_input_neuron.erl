@@ -12,8 +12,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, feed_forward/2, init_weights/2,
-         forward_output/2, calculate_gradient/2, update_weights/3]).
+-export([start_link/0, feed_forward/2, init_weights/2,
+         forward_output/2, calculate_gradient/2,
+         update_weights/3, add_input/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -30,8 +31,11 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link(Args) ->
-    gen_server:start_link(?MODULE, [Args], []).
+start_link() ->
+    gen_server:start_link(?MODULE, [], []).
+
+add_input(NeuronPid, Input) ->
+    gen_server:call(NeuronPid, {add_input, Input}).
 
 feed_forward(NeuronPid, TargetPids) ->
     gen_server:call(NeuronPid, {feed_forward, TargetPids}).
@@ -49,12 +53,16 @@ update_weights(NeuronPid, LearningRate, Momentum) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([Input]) ->
-     log4erl:info("Starting input neuron with pid:(~p) and input:~p ~n",
-                 [self(), Input]),
-    State = #state{input=Input},
+init([]) ->
+     log4erl:info("Starting input neuron with pid:(~p)~n",
+                 [self()]),
+    State = #state{},
     {ok, State}.
 
+handle_call({add_input, Input}, _From, State) ->
+    NewState = State#state{input=Input},
+    log4erl:info("Input neuron (~p) has an input of:~p~n", [self(), Input]),
+    {reply, ok, NewState};
 handle_call({init_weights, Count}, _From, State) ->
     Weights = e_ann_math:generate_random_weights(Count),
     WeightDeltas = e_ann_math:init_weight_deltas(Count),

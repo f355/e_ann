@@ -11,7 +11,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0, add_child/2]).
+-export([start_link/0, add_child/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -30,12 +30,11 @@ start_link() ->
 init([]) ->
     log4erl:info("Starting input_neuron supervisor with pid:(~p)~n", [self()]),
     RestartStrategy = {simple_one_for_one, 0, 1},
-    Children = [child(e_ann_input_neuron, [])],
+    Children = [child(e_ann_input_neuron)],
     {ok, {RestartStrategy, Children}}.
 
-add_child(Sup, Input) ->
-    supervisor:start_child(Sup, [Input]).
+add_child(Sup) ->
+    supervisor:start_child(Sup, []).
 
-child(Module, Input) ->
-    {Module, {Module, start_link, Input},
-     temporary, 2000, worker, [Module]}.
+child(Module) ->
+    {Module, {Module, start_link, []}, temporary, 2000, worker, [Module]}.

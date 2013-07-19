@@ -71,7 +71,7 @@ update_weights(NeuronPid, LearningRate, Momentum) ->
 
 init([]) ->
     log4erl:info("Starting hidden neuron with pid:~p~n", [self()]),
-    State = #state{weights=[]},
+    State = #state{},
     {ok, State}.
 
 handle_call({calculate_node_delta, Delta}, _From, State) ->
