@@ -12,16 +12,18 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, add_input/2, activate_neuron/1,
+-export([start_link/0, add_input/2, activate_neuron/1,
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
--export([get_node_delta/1, backpropagate_with_bias/3]).
+-export([get_node_delta/1, backpropagate_with_bias/3,
+         add_ideal_output/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
--record(state, {global_error=[],
+-record(state, {global_errors={},
+                global_error=0.0,
                 error=0.0,
                 ideal_output=0.0,
                 inputs=[],
@@ -32,11 +34,14 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link(Args) ->
-    gen_server:start_link(?MODULE, [Args], []).
+start_link() ->
+    gen_server:start_link(?MODULE, [], []).
 
 add_input(NeuronPid, Input) ->
     gen_server:call(NeuronPid, {add_to_inputs, Input}).
+
+add_ideal_output(NeuronPid, IdealOutput) ->
+    gen_server:call(NeuronPid, {ideal_output, IdealOutput}).
 
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
@@ -60,10 +65,9 @@ backpropagate_with_bias(NeuronPid, Layer, HBias) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([Ideal]) ->
-    log4erl:info("Starting output neuron with pid:(~p) - ideal output:~p~n",
-                [self(), Ideal]),
-    State = #state{ideal_output=Ideal},
+init([]) ->
+    log4erl:info("Starting output neuron with pid:(~p)~n", [self()]),
+    State = #state{},
     {ok, State}.
 handle_call(calculate_node_delta, _From, State) ->
     Output = State#state.output,
@@ -76,13 +80,15 @@ handle_call(calculate_node_delta, _From, State) ->
 handle_call(calculate_error, _From, State) ->
     Output = State#state.output,
     Ideal = State#state.ideal_output,
-    GlobalErrs = State#state.global_error,
+    GlobalErrs = State#state.global_errors,
     Error = e_ann_math:linear_error(Output, Ideal),
-    NewGlobalErrs = [Error | GlobalErrs],
+    NewGlobalErrs = erlang:append_element(GlobalErrs, Error),
     GlobalError = e_ann_math:mse(NewGlobalErrs),
     log4erl:info("Output neuron (~p) has a global error of:~p~n",
                  [self(), GlobalError]),
-    NewState = State#state{global_error=GlobalError},
+    io:format("Global Error:~p~n",[GlobalError]),
+    FirstState = State#state{global_error=GlobalError},
+    NewState = FirstState#state{global_errors=NewGlobalErrs},
     FinalState = NewState#state{error=Error},
     {reply, ok, FinalState};
 handle_call(sum, _From, State) ->
@@ -111,6 +117,11 @@ handle_call({backpropagate, Layer, HBias}, _From, State) ->
     [ e_ann_hidden_neuron:calculate_gradient(Pid, Delta) || Pid <- Layer ],
     e_ann_hidden_bias_neuron:calculate_gradient(HBias, Delta),
     {reply, ok, State};
+handle_call({ideal_output, Ideal}, _From, State) ->
+    NewState = State#state{ideal_output=Ideal},
+    log4erl:info("Output neuron (~p) was assigned ideal output of:~p~n",
+                 [self(), Ideal]),
+    {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

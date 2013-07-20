@@ -50,7 +50,7 @@ update_weights(NeuronPid, LearningRate, Momentum) ->
 %%%===================================================================
 
 init([]) ->
-    log4erl:info("Starting hidden bias neuron with pid:(~p)~n", [self()]),
+    log4erl:log("Starting hidden bias neuron with pid:(~p)~n", [self()]),
     State = #state{weights=[]},
     {ok, State}.
 

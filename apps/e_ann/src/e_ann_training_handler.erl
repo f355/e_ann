@@ -13,7 +13,11 @@
 -define(MAINSUPERVISOR, e_ann_sup).
 -compile([export_all]).
 
-train(Inputs , Ideal) ->
+%% [[1.0,1.0],[0.0,1.0],[1.0,0.0],[0.0,0.0]] inputs
+%% [[0.0],[1.0],[1.0],[0.0]]
+train() ->
+    Inputs = [[1.0,1.0],[0.0,1.0],[1.0,0.0],[0.0,0.0]],
+    Outputs = [[0.0],[1.0],[1.0],[0.0]],
     [{_,IBSup},{_, HBSup}, {_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
     ICount = 2,
@@ -23,19 +27,35 @@ train(Inputs , Ideal) ->
     LearningRate = 0.7,
     Ilayer = e_ann_training_handler:create_input_layer(ICount, ISup, HCount),
     Hlayer = e_ann_training_handler:create_hidden_layer(HCount, HSup , OCount),
-    Olayer = e_ann_training_handler:create_output_layer(Ideal, OCount, OSup),
+    Olayer = e_ann_training_handler:create_output_layer(OCount, OSup),
     IBias = input_bias(IBSup, 2),
     HBias = hidden_bias(HBSup, 1),
-    feed_forward_input_layer_with_bias(Inputs, Ilayer, Hlayer, IBias),
-    feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
-    backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
-    backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
-    update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
-    update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum).
+    Layers = [Ilayer, Hlayer, Olayer, IBias, HBias],
+    training_loop(Inputs, Outputs, LearningRate, Momentum, Layers).
+    %% add_outputs_to_output_layer(Olayer, Outputs),
+    %% feed_forward_input_layer_with_bias(Inputs, Ilayer, Hlayer, IBias),
+    %% feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
+    %% backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
+    %% backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
+    %% update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
+    %% update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+training_loop([], [], _, _, _) ->
+    ok;
+training_loop(Inputs, Outputs, LearningRate, Momentum, Layers) ->
+    [Ilayer, Hlayer, Olayer, IBias, HBias] = Layers,
+    add_outputs_to_output_layer(Olayer, hd(Outputs)),
+    feed_forward_input_layer_with_bias(hd(Inputs), Ilayer, Hlayer, IBias),
+    feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
+    backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
+    backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
+    update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
+    update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum),
+    training_loop(tl(Inputs), tl(Outputs), LearningRate, Momentum, Layers).
 
 feed_forward_input_layer_with_bias(Inputs, Ilayer, Layer, IBias) ->
     add_inputs_to_input_layer(Ilayer, Inputs),
@@ -76,8 +96,8 @@ calculate_output_neuron_delta(Neuron) ->
     e_ann_output_neuron:calculate_error(Neuron),
     e_ann_output_neuron:calculate_node_delta(Neuron).
 
-create_output_layer(Ideal, OCount, OSup) ->
-    get_output_neurons(OCount, OSup, Ideal, []).
+create_output_layer(OCount, OSup) ->
+    get_output_neurons(OCount, OSup, []).
 
 create_hidden_layer(HCnt, HSup , OCnt) ->
     HiddenNeuronPids = get_hidden_neurons(HCnt, HSup, []),
@@ -122,16 +142,22 @@ get_hidden_neurons(HCount, HSup, Acc) ->
     Acc2 = [Pid | Acc],
     get_hidden_neurons(NewCount, HSup, Acc2).
 
-get_output_neurons(0, _, [], Acc) ->
+get_output_neurons(0, _, Acc) ->
     Acc;
-get_output_neurons(OCount, OSup, Ideal, Acc) ->
-    {ok, Pid} = e_ann_output_neuron_sup:add_child(OSup, hd(Ideal)),
+get_output_neurons(OCount, OSup, Acc) ->
+    {ok, Pid} = e_ann_output_neuron_sup:add_child(OSup),
     NewCount = OCount - 1,
     Acc2 = [Pid | Acc],
-    get_output_neurons(NewCount, OSup, tl(Ideal), Acc2).
+    get_output_neurons(NewCount, OSup, Acc2).
 
 add_inputs_to_input_layer([], []) ->
     ok;
 add_inputs_to_input_layer(Layer, Inputs) ->
     e_ann_input_neuron:add_input(hd(Layer), hd(Inputs)),
     add_inputs_to_input_layer(tl(Layer), tl(Inputs)).
+
+add_outputs_to_output_layer([], []) ->
+    ok;
+add_outputs_to_output_layer(Layer, Outputs) ->
+    e_ann_output_neuron:add_ideal_output(hd(Layer), hd(Outputs)),
+    add_outputs_to_output_layer(tl(Layer), tl(Outputs)).

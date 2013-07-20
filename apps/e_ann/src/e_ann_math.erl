@@ -13,8 +13,9 @@
 
 %% @doc Mean Squared Error
 mse(Errors) ->
-    Errs = [ squared_diff(X) || X <- Errors ],
-    lists:sum(Errs) / length(Errors).
+    Errs = tuple_to_list(Errors),
+    SquaredErrors = [ squared_diff(X) || X <- Errs ],
+    lists:sum(SquaredErrors) / length(Errs).
 
 %% @doc Sum of Squares Error
 ess(Errors) ->
