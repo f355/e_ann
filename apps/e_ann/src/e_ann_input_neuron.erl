@@ -5,7 +5,7 @@
 %%% This module spawns input neurons that receive an input upon init.
 %%% Random weights are then assigned and feedforward commences.
 %%% @end
-%%% Created :  9 Mar 2013 by cantheman <java10cana@gmail.com>
+%%% Created :  20 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_input_neuron).
 

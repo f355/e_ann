@@ -6,7 +6,7 @@
 %%% child processes accordingly. It then reads the input values and starts
 %%% training the network.
 %%% @end
-%%% Created :  19 May 2013 by cantheman <java10cana@gmail.com>
+%%% Created :  19 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_training_handler).
 

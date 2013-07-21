@@ -1,3 +1,13 @@
+%%%-------------------------------------------------------------------
+%%% @author cantheman <java10cana@gmail.com>
+%%% @copyright (C) 2013, cantheman
+%%% @doc
+%%% This is the math module. It contains the most common activation and
+%%% mean square functions.
+%%% @end
+%%% Created : 16 June 2013 by cantheman <java10cana@gmail.com>
+%%%-------------------------------------------------------------------
+
 -module(e_ann_math).
 
 -export([mse/1, ess/1, rms/1, sigmoid/1,

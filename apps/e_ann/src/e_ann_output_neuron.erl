@@ -5,7 +5,7 @@
 %%% This module spawns output neurons. After a output neuron has calculated
 %%% it's own node delta it initiates backpropagation.
 %%% @end
-%%% Created : 16 Mar 2013 by cantheman <java10cana@gmail.com>
+%%% Created : 16 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_output_neuron).
 
