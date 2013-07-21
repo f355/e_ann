@@ -16,8 +16,8 @@
 %% [[1.0,1.0],[0.0,1.0],[1.0,0.0],[0.0,0.0]] inputs
 %% [[0.0],[1.0],[1.0],[0.0]]
 train() ->
-    Inputs = [[1.0,1.0],[0.0,1.0],[1.0,0.0],[0.0,0.0]],
-    Outputs = [[0.0],[1.0],[1.0],[0.0]],
+    Inputs = read_training_data("inputs.txt"),
+    Outputs = read_training_data("outputs.txt"),
     [{_,IBSup},{_, HBSup}, {_,HSup},
      {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
     ICount = 2,
@@ -31,7 +31,10 @@ train() ->
     IBias = input_bias(IBSup, 2),
     HBias = hidden_bias(HBSup, 1),
     Layers = [Ilayer, Hlayer, Olayer, IBias, HBias],
-    training_loop(Inputs, Outputs, LearningRate, Momentum, Layers).
+    ErrorRate = 0.01,
+    GlobalError = 100.0,
+    training_loop(Inputs, Outputs, LearningRate, Momentum,
+                  GlobalError, ErrorRate, Layers).
     %% add_outputs_to_output_layer(Olayer, Outputs),
     %% feed_forward_input_layer_with_bias(Inputs, Ilayer, Hlayer, IBias),
     %% feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
@@ -43,19 +46,27 @@ train() ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-training_loop([], [], _, _, _) ->
-    ok;
-training_loop(Inputs, Outputs, LearningRate, Momentum, Layers) ->
+training_loop(_, _, _, _, GlobalError, ErrorRate, _)
+  when GlobalError < ErrorRate ->
+    training_complete;
+training_loop([], [], _, _, _, _, _) ->
+    training_set_finished;
+training_loop(Inputs, Outputs, LearningRate, Momentum,
+              GlobalError, ErrorRate, Layers) when GlobalError > ErrorRate ->
     [Ilayer, Hlayer, Olayer, IBias, HBias] = Layers,
-    add_outputs_to_output_layer(Olayer, hd(Outputs)),
-    feed_forward_input_layer_with_bias(hd(Inputs), Ilayer, Hlayer, IBias),
+    IdealOutput = convert_to_integer(hd(Outputs)),
+    set_ideal_output(Olayer, IdealOutput),
+    Input = convert_to_integer(hd(Inputs)),
+    feed_forward_input_layer_with_bias(Input, Ilayer, Hlayer, IBias),
     feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
     backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
     backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
     update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
     update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum),
-    training_loop(tl(Inputs), tl(Outputs), LearningRate, Momentum, Layers).
+    {ok, NewGlobalError} = e_ann_output_neuron:get_global_error(hd(Olayer)),
+    %% infinite loop temporary
+    training_loop(Inputs, Outputs, LearningRate, Momentum,
+                  NewGlobalError, ErrorRate, Layers).
 
 feed_forward_input_layer_with_bias(Inputs, Ilayer, Layer, IBias) ->
     add_inputs_to_input_layer(Ilayer, Inputs),
@@ -156,8 +167,18 @@ add_inputs_to_input_layer(Layer, Inputs) ->
     e_ann_input_neuron:add_input(hd(Layer), hd(Inputs)),
     add_inputs_to_input_layer(tl(Layer), tl(Inputs)).
 
-add_outputs_to_output_layer([], []) ->
+set_ideal_output([], []) ->
     ok;
-add_outputs_to_output_layer(Layer, Outputs) ->
-    e_ann_output_neuron:add_ideal_output(hd(Layer), hd(Outputs)),
-    add_outputs_to_output_layer(tl(Layer), tl(Outputs)).
+set_ideal_output(Layer, Outputs) ->
+    e_ann_output_neuron:set_ideal_output(hd(Layer), hd(Outputs)),
+    set_ideal_output(tl(Layer), tl(Outputs)).
+
+read_training_data(File) ->
+    {ok, Bin} = file:read_file(File),
+    SplitLines = binary:split(Bin, <<"\n">>, [global]),
+    Lines = lists:delete([], [ binary_to_list(Line) || Line <- SplitLines ]),
+    Inputs = [ re:split(L, ",", [{return, list}]) || L <- Lines ],
+    lists:delete([], Inputs).
+
+convert_to_integer(List) ->
+    [ list_to_float(X) || X <-List ]. 

@@ -16,7 +16,7 @@
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
 -export([get_node_delta/1, backpropagate_with_bias/3,
-         add_ideal_output/2]).
+         set_ideal_output/2, get_global_error/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -40,8 +40,8 @@ start_link() ->
 add_input(NeuronPid, Input) ->
     gen_server:call(NeuronPid, {add_to_inputs, Input}).
 
-add_ideal_output(NeuronPid, IdealOutput) ->
-    gen_server:call(NeuronPid, {ideal_output, IdealOutput}).
+set_ideal_output(NeuronPid, IdealOutput) ->
+    gen_server:call(NeuronPid, {set_ideal_output, IdealOutput}).
 
 activate_neuron(NeuronPid) ->
     gen_server:call(NeuronPid, activate_neuron).
@@ -60,6 +60,9 @@ get_node_delta(NeuronPid) ->
 
 backpropagate_with_bias(NeuronPid, Layer, HBias) ->
     gen_server:call(NeuronPid, {backpropagate, Layer, HBias}).
+
+get_global_error(NeuronPid) ->
+    gen_server:call(NeuronPid, get_global_error).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -117,11 +120,14 @@ handle_call({backpropagate, Layer, HBias}, _From, State) ->
     [ e_ann_hidden_neuron:calculate_gradient(Pid, Delta) || Pid <- Layer ],
     e_ann_hidden_bias_neuron:calculate_gradient(HBias, Delta),
     {reply, ok, State};
-handle_call({ideal_output, Ideal}, _From, State) ->
+handle_call({set_ideal_output, Ideal}, _From, State) ->
     NewState = State#state{ideal_output=Ideal},
     log4erl:info("Output neuron (~p) was assigned ideal output of:~p~n",
                  [self(), Ideal]),
     {reply, ok, NewState};
+handle_call(get_global_error, _From, State) ->
+    GlobalError = State#state.global_error,
+    {reply, {ok, GlobalError}, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
