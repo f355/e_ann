@@ -1,1 +1,1 @@
-{"name":"e_ann","tagline":"Neural Networks in Erlang OTP Style","body":"<pre>$ git clone https://github.com/Cantheman/e_ann.git</pre>","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
+{"name":"e_ann","tagline":"Neural Networks in Erlang OTP Style","body":"<pre>$ git clone https://github.com/Cantheman/e_ann.git</pre>\r\n<pre>$ cd e_ann </pre>\r\n<pre>$ ./rebar get-deps</pre>\r\n<pre>$ ./rebar compile</pre>","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
