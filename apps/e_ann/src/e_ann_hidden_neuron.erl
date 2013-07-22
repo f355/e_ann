@@ -15,7 +15,8 @@
          feed_forward/2, init_weights/2, sum/1]).
 
 -export([forward_output/2, calculate_node_delta/2, update_weights/3,
-         calculate_gradient/2, backpropagate_with_bias/3]).
+         calculate_gradient/2, backpropagate_with_bias/3,
+         get_weights/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -64,6 +65,9 @@ backpropagate_with_bias(NeuronPid, Layer, IBias) ->
 
 update_weights(NeuronPid, LearningRate, Momentum) ->
     gen_server:call(NeuronPid, {update_weights, LearningRate, Momentum}).
+
+get_weights(NeuronPid) ->
+    gen_server:call(NeuronPid, get_weights).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -137,6 +141,9 @@ handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
     NewState = State#state{weight_deltas=NewWeightDeltas},
     FinalState = NewState#state{weights=UpdatedWeights},
     {reply, ok, FinalState};
+handle_call(get_weights, _From, State) ->
+    Weights = State#state.weights,
+    {reply, Weights, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

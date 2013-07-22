@@ -13,8 +13,6 @@
 -define(MAINSUPERVISOR, e_ann_sup).
 -compile([export_all]).
 
-%% [[1.0,1.0],[0.0,1.0],[1.0,0.0],[0.0,0.0]] inputs
-%% [[0.0],[1.0],[1.0],[0.0]]
 train() ->
     Inputs = read_training_data("inputs.txt"),
     Outputs = read_training_data("outputs.txt"),
@@ -33,15 +31,9 @@ train() ->
     Layers = [Ilayer, Hlayer, Olayer, IBias, HBias],
     ErrorRate = 0.01,
     GlobalError = 100.0,
-    training_loop(Inputs, Outputs, LearningRate, Momentum,
-                  GlobalError, ErrorRate, Layers).
-    %% add_outputs_to_output_layer(Olayer, Outputs),
-    %% feed_forward_input_layer_with_bias(Inputs, Ilayer, Hlayer, IBias),
-    %% feed_forward_hidden_layer_with_bias(Hlayer, Olayer, HBias),
-    %% backpropagation_output_layer_with_bias(Olayer, Hlayer, HBias),
-    %% backpropagation_hidden_layer_with_bias(Hlayer, Ilayer, IBias),
-    %% update_weights_input_layer_with_bias(Ilayer, IBias, LearningRate, Momentum),
-    %% update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum).
+    training_complete = training_loop(Inputs, Outputs, LearningRate, Momentum,
+                                      GlobalError, ErrorRate, Layers),
+    get_layer_weights(Ilayer, Hlayer, IBias, HBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -181,4 +173,14 @@ read_training_data(File) ->
     lists:delete([], Inputs).
 
 convert_to_integer(List) ->
-    [ list_to_float(X) || X <-List ]. 
+    [ list_to_float(X) || X <-List ].
+
+get_layer_weights(Ilayer, Hlayer, IBias, HBias) ->
+    I_W = [ {input_neuron_weights, e_ann_input_neuron:get_weights(Neuron)} ||
+              Neuron <- Ilayer ],
+    H_W = [ {hidden_neuron_weights, e_ann_hidden_neuron:get_weights(Neuron)} ||
+              Neuron <- Hlayer ],
+    IBiasWeight = e_ann_input_bias_neuron:get_weights(IBias),
+    HBiasWeight = e_ann_hidden_bias_neuron:get_weights(HBias),
+    lists:flatten([I_W, H_W, {input_bias_weights, IBiasWeight},
+     {hidden_bias_weight, HBiasWeight}]).

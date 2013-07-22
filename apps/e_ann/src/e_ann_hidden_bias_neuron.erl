@@ -12,7 +12,7 @@
 
 %% API
 -export([start_link/0, feed_forward/2, init_weights/2,
-         calculate_gradient/2, update_weights/3]).
+         calculate_gradient/2, update_weights/3, get_weights/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -25,7 +25,6 @@
                 weight_deltas=[],
                 feedforward_values=[],
                 gradient=0.0}).
-
 
 %%%===================================================================
 %%% API
@@ -45,13 +44,15 @@ calculate_gradient(NeuronPid, Delta) ->
 update_weights(NeuronPid, LearningRate, Momentum) ->
     gen_server:call(NeuronPid, {update_weights, LearningRate, Momentum}).
 
+get_weights(NeuronPid) ->
+    gen_server:call(NeuronPid, get_weights).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-
 init([]) ->
     log4erl:log("Starting hidden bias neuron with pid:(~p)~n", [self()]),
-    State = #state{weights=[]},
+    State = #state{},
     {ok, State}.
 
 handle_call({init_weights, Count}, _From, State) ->
@@ -85,6 +86,9 @@ handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
     NewState = State#state{weight_deltas=NewWeightDeltas},
     FinalState = NewState#state{weights=UpdatedWeights},
     {reply, ok, FinalState};
+handle_call(get_weights, _From, State) ->
+    Weights = State#state.weights,
+    {reply, Weights, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
