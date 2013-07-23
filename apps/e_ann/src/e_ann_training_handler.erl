@@ -4,35 +4,33 @@
 %%% @doc
 %%% This module reads the architecture config and lets the supervisors spawn
 %%% child processes accordingly. It then reads the input values and starts
-%%% training the network.
+%%% training the network. When it's done it will deliver the frozen weights
+%%% that can be used for production training.
 %%% @end
 %%% Created :  19 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_training_handler).
 
 -define(MAINSUPERVISOR, e_ann_sup).
+-define(GLOBALERROR, 100.0).
 -compile([export_all]).
 
-train() ->
+%% [2,2,1,1,1,0.3,0.7,0.01].
+
+train(Architecture) ->
+    [ICount, HCount, OCount, InputBias, HiddenBias,
+     Momentum, LearningRate, ErrorRate] = Architecture,
     Inputs = read_training_data("inputs.txt"),
     Outputs = read_training_data("outputs.txt"),
-    [{_,IBSup},{_, HBSup}, {_,HSup},
-     {_,OSup},{_,ISup}] = e_ann_training_handler:get_neuron_sup_pids(),
-    ICount = 2,
-    HCount = 2,
-    OCount = 1,
-    Momentum = 0.3,
-    LearningRate = 0.7,
-    Ilayer = e_ann_training_handler:create_input_layer(ICount, ISup, HCount),
+    [{_,IBSup},{_, HBSup},{_,HSup},{_,OSup},{_,ISup}] = get_neuron_sup_pids(),
+    Ilayer = e_ann_training_handler:spawn_input_layer(ICount, ISup, HCount),
     Hlayer = e_ann_training_handler:create_hidden_layer(HCount, HSup , OCount),
     Olayer = e_ann_training_handler:create_output_layer(OCount, OSup),
-    IBias = input_bias(IBSup, 2),
-    HBias = hidden_bias(HBSup, 1),
+    IBias = spawn_input_bias(IBSup, HCount),
+    HBias = spawn_hidden_bias(HBSup, OCount),
     Layers = [Ilayer, Hlayer, Olayer, IBias, HBias],
-    ErrorRate = 0.01,
-    GlobalError = 100.0,
     training_complete = training_loop(Inputs, Outputs, LearningRate, Momentum,
-                                      GlobalError, ErrorRate, Layers),
+                                      ?GLOBALERROR, ErrorRate, Layers),
     get_layer_weights(Ilayer, Hlayer, IBias, HBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -107,7 +105,7 @@ create_hidden_layer(HCnt, HSup , OCnt) ->
     [ e_ann_hidden_neuron:init_weights(Pid, OCnt) || Pid <- HiddenNeuronPids ],
     HiddenNeuronPids.
 
-create_input_layer(ICount, ISup, HCount) ->
+spawn_input_layer(ICount, ISup, HCount) ->
     InputNeuronPids = get_input_neurons(ICount, ISup, []),
     [ e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids ],
     InputNeuronPids.
@@ -119,12 +117,12 @@ get_neuron_sup_pids() ->
     [{input_bias_sup, IBSup},{hidden_bias_sup, HBSup}, {hidden_sup, HSup},
      {output_sup, OSup},{input_sup, ISup}].
 
-input_bias(Sup, Count) ->
+spawn_input_bias(Sup, Count) ->
     {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),
     e_ann_input_bias_neuron:init_weights(Pid, Count),
     Pid.
 
-hidden_bias(Sup, Count) ->
+spawn_hidden_bias(Sup, Count) ->
     {ok, Pid} = e_ann_hidden_bias_neuron_sup:add_child(Sup),
     e_ann_hidden_bias_neuron:init_weights(Pid, Count),
     Pid.
