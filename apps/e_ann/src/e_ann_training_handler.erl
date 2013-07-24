@@ -11,7 +11,6 @@
 %%%-------------------------------------------------------------------
 -module(e_ann_training_handler).
 
--define(MAINSUPERVISOR, e_ann_sup).
 -define(GLOBALERROR, 100.0).
 -compile([export_all]).
 
@@ -22,16 +21,30 @@ train(Architecture) ->
      Momentum, LearningRate, ErrorRate] = Architecture,
     Inputs = read_training_data("inputs.txt"),
     Outputs = read_training_data("outputs.txt"),
-    [{_,IBSup},{_, HBSup},{_,HSup},{_,OSup},{_,ISup}] = get_neuron_sup_pids(),
-    Ilayer = e_ann_training_handler:spawn_input_layer(ICount, ISup, HCount),
-    Hlayer = e_ann_training_handler:create_hidden_layer(HCount, HSup , OCount),
-    Olayer = e_ann_training_handler:create_output_layer(OCount, OSup),
-    IBias = spawn_input_bias(IBSup, HCount),
-    HBias = spawn_hidden_bias(HBSup, OCount),
-    Layers = [Ilayer, Hlayer, Olayer, IBias, HBias],
+    [{_,IBSup},{_, HBSup},{_,HSup},
+     {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
+    ISupFun = fun e_ann_input_neuron_sup:add_child/1,
+    IWeightFun = fun e_ann_input_neuron:init_weights/2,
+    HSupFun = fun e_ann_hidden_neuron_sup:add_child/1,
+    HWeightFun = fun e_ann_hidden_neuron:init_weights/2,
+    OSupFun = fun e_ann_output_neuron_sup:add_child/1,
+    IBiasSupFun = fun e_ann_input_bias_neuron_sup:add_child/1,
+    IBiasWeightFun = fun e_ann_input_bias_neuron:init_weights/2,
+    HBiasSupFun = fun e_ann_hidden_bias_neuron_sup:add_child/1,
+    HBiasWeightFun = fun e_ann_hidden_bias_neuron:init_weights/2,
+    IL = e_ann_network:create_layer_with_random_weights(ICount, ISup, ISupFun,
+                                                        IWeightFun, HCount),
+    HL = e_ann_network:create_layer_with_random_weights(HCount, HSup , HSupFun,
+                                                        HWeightFun, OCount),
+    OL = e_ann_network:spawn_neurons(OCount, OSup, OSupFun, []),
+    IBias = e_ann_network:spawn_bias_neuron(IBSup, HCount,
+                                            IBiasSupFun, IBiasWeightFun),
+    HBias = e_ann_network:spawn_bias_neuron(HBSup, OCount,
+                                            HBiasSupFun, HBiasWeightFun),
+     Layers = [IL, HL, OL, IBias, HBias],
     training_complete = training_loop(Inputs, Outputs, LearningRate, Momentum,
                                       ?GLOBALERROR, ErrorRate, Layers),
-    get_layer_weights(Ilayer, Hlayer, IBias, HBias).
+    get_layer_weights(IL, HL, IBias, HBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,60 +109,6 @@ output_neuron_activation(Neuron) ->
 calculate_output_neuron_delta(Neuron) ->
     e_ann_output_neuron:calculate_error(Neuron),
     e_ann_output_neuron:calculate_node_delta(Neuron).
-
-create_output_layer(OCount, OSup) ->
-    get_output_neurons(OCount, OSup, []).
-
-create_hidden_layer(HCnt, HSup , OCnt) ->
-    HiddenNeuronPids = get_hidden_neurons(HCnt, HSup, []),
-    [ e_ann_hidden_neuron:init_weights(Pid, OCnt) || Pid <- HiddenNeuronPids ],
-    HiddenNeuronPids.
-
-spawn_input_layer(ICount, ISup, HCount) ->
-    InputNeuronPids = get_input_neurons(ICount, ISup, []),
-    [ e_ann_input_neuron:init_weights(Pid, HCount) || Pid <- InputNeuronPids ],
-    InputNeuronPids.
-
-get_neuron_sup_pids() ->
-    [{_, IBSup, _, _}, {_, HBSup,_ ,_}, {_, HSup, _, _},
-     {_, OSup, _, _}, {_, ISup, _, _}] =
-        supervisor:which_children(?MAINSUPERVISOR),
-    [{input_bias_sup, IBSup},{hidden_bias_sup, HBSup}, {hidden_sup, HSup},
-     {output_sup, OSup},{input_sup, ISup}].
-
-spawn_input_bias(Sup, Count) ->
-    {ok, Pid} = e_ann_input_bias_neuron_sup:add_child(Sup),
-    e_ann_input_bias_neuron:init_weights(Pid, Count),
-    Pid.
-
-spawn_hidden_bias(Sup, Count) ->
-    {ok, Pid} = e_ann_hidden_bias_neuron_sup:add_child(Sup),
-    e_ann_hidden_bias_neuron:init_weights(Pid, Count),
-    Pid.
-
-get_input_neurons(0, _, Acc) ->
-    Acc;
-get_input_neurons(ICount, ISup, Acc) ->
-    {ok, Pid} = e_ann_input_neuron_sup:add_child(ISup),
-    NewCount = ICount - 1,
-    Acc2 = [Pid | Acc],
-    get_input_neurons(NewCount, ISup, Acc2).
-
-get_hidden_neurons(0, _, Acc) ->
-    Acc;
-get_hidden_neurons(HCount, HSup, Acc) ->
-    {ok, Pid} = e_ann_hidden_neuron_sup:add_child(HSup),
-    NewCount = HCount - 1,
-    Acc2 = [Pid | Acc],
-    get_hidden_neurons(NewCount, HSup, Acc2).
-
-get_output_neurons(0, _, Acc) ->
-    Acc;
-get_output_neurons(OCount, OSup, Acc) ->
-    {ok, Pid} = e_ann_output_neuron_sup:add_child(OSup),
-    NewCount = OCount - 1,
-    Acc2 = [Pid | Acc],
-    get_output_neurons(NewCount, OSup, Acc2).
 
 add_inputs_to_input_layer([], []) ->
     ok;

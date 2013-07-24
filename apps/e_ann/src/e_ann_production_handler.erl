@@ -10,6 +10,6 @@
 -module(e_ann_production_handler).
 
 init_network(Weights) ->
-    [{_,IBSup},{_, HBSup},{_,HSup},{_,OSup},{_,ISup}] =
-        e_ann_training_handler:get_neuron_sup_pids(),
+    [{_,IBSup},{_, HBSup},{_,HSup},
+     {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
     ok.
