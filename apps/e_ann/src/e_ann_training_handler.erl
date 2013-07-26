@@ -72,7 +72,7 @@ training_loop(Inputs, Outputs, LearningRate, Momentum,
                   NewGlobalError, ErrorRate, Layers).
 
 feed_forward_input_layer_with_bias(Inputs, Ilayer, Layer, IBias) ->
-    add_inputs_to_input_layer(Ilayer, Inputs),
+    e_ann_network:set_inputs(Ilayer, Inputs),
     [ e_ann_input_neuron:feed_forward(Neuron, Layer) || Neuron <- Ilayer ],
     e_ann_input_bias_neuron:feed_forward(IBias, Layer).
 
@@ -109,12 +109,6 @@ output_neuron_activation(Neuron) ->
 calculate_output_neuron_delta(Neuron) ->
     e_ann_output_neuron:calculate_error(Neuron),
     e_ann_output_neuron:calculate_node_delta(Neuron).
-
-add_inputs_to_input_layer([], []) ->
-    ok;
-add_inputs_to_input_layer(Layer, Inputs) ->
-    e_ann_input_neuron:add_input(hd(Layer), hd(Inputs)),
-    add_inputs_to_input_layer(tl(Layer), tl(Inputs)).
 
 set_ideal_output([], []) ->
     ok;

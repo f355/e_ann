@@ -11,8 +11,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, feed_forward/2, init_weights/2,
-         calculate_gradient/2, update_weights/3, get_weights/1]).
+-export([start_link/0, feed_forward/2, calculate_gradient/2]).
+
+-export([set_weights/2, update_weights/3, get_weights/1, init_weights/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -35,17 +36,20 @@ start_link() ->
 feed_forward(NeuronPid, TargetPids) ->
     gen_server:call(NeuronPid, {feed_forward, TargetPids}).
 
-init_weights(NeuronPid, Count) ->
-    gen_server:call(NeuronPid, {init_weights, Count}).
-
 calculate_gradient(NeuronPid, Delta) ->
     gen_server:call(NeuronPid, {calculate_gradient, Delta}).
+
+init_weights(NeuronPid, Count) ->
+    gen_server:call(NeuronPid, {init_weights, Count}).
 
 update_weights(NeuronPid, LearningRate, Momentum) ->
     gen_server:call(NeuronPid, {update_weights, LearningRate, Momentum}).
 
 get_weights(NeuronPid) ->
     gen_server:call(NeuronPid, get_weights).
+
+set_weights(NeuronPid, Weights) ->
+    gen_server:call(NeuronPid, {set_weights, Weights}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -55,14 +59,6 @@ init([]) ->
     State = #state{},
     {ok, State}.
 
-handle_call({init_weights, Count}, _From, State) ->
-    Weights = e_ann_math:generate_random_weights(Count),
-    WeightDeltas = e_ann_math:init_weight_deltas(Count),
-    NewState = State#state{weights=Weights},
-    FinalState = NewState#state{weight_deltas=WeightDeltas},
-    log4erl:info("Hidden bias neuron (~p) initialized weights ~p~n",
-                 [self(), Weights]),
-    {reply, ok, FinalState};
 handle_call({feed_forward, TargetPids}, _From, State) ->
     Weights = State#state.weights,
     FeedForwardValues = [ ?INPUT * Weight || Weight <- Weights ],
@@ -74,6 +70,14 @@ handle_call({calculate_gradient, Delta} , _From, State) ->
     log4erl:info("Hidden bias neuron (~p) gradient:~p~n", [self(), Gradient]),
     NewState = State#state{gradient=Gradient},
     {reply, ok, NewState};
+handle_call({init_weights, Count}, _From, State) ->
+    Weights = e_ann_math:generate_random_weights(Count),
+    WeightDeltas = e_ann_math:init_weight_deltas(Count),
+    NewState = State#state{weights=Weights},
+    FinalState = NewState#state{weight_deltas=WeightDeltas},
+    log4erl:info("Hidden bias neuron (~p) initialized weights ~p~n",
+                 [self(), Weights]),
+    {reply, ok, FinalState};
 handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
     Gradient = State#state.gradient,
     WeightDeltas = State#state.weight_deltas,
@@ -89,6 +93,11 @@ handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
 handle_call(get_weights, _From, State) ->
     Weights = State#state.weights,
     {reply, Weights, State};
+handle_call({set_weight, Weights}, _From, State) ->
+    NewState = State#state{weights=Weights},
+    log4erl:info("Hidden bias neuron (~p) weights set to:~p~n",
+                 [self(), Weights]),
+    {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
