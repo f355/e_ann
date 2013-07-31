@@ -85,7 +85,7 @@ init([]) ->
 handle_call({calculate_node_delta, Delta}, _From, State) ->
     Sum = State#state.sum,
     Weight = hd(State#state.weights),
-    NodeDelta = e_ann_math:interior_node_delta(Sum, Delta, Weight),
+    NodeDelta = e_ann_math:interior_node_delta_logit(Sum, Delta, Weight),
     log4erl:info("Hidden neuron (~p) node delta:~p~n", [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
     {reply, ok, NewState};
@@ -116,7 +116,7 @@ handle_call({add_to_inputs, Input}, _From, State) ->
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
-    Output = e_ann_math:sigmoid(Sum),
+    Output = e_ann_math:logit(Sum),
     log4erl:info("Hidden neuron (~p) output value:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};

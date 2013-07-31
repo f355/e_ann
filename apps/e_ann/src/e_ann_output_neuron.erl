@@ -75,7 +75,7 @@ init([]) ->
 handle_call(calculate_node_delta, _From, State) ->
     Output = State#state.output,
     Error = State#state.error,
-    NodeDelta = e_ann_math:output_node_delta(Error, Output),
+    NodeDelta = e_ann_math:output_node_delta_logit(Error, Output),
     log4erl:info("Output neuron (~p) has a node delta of:~p~n",
                  [self(), NodeDelta]),
     NewState = State#state{node_delta=NodeDelta},
@@ -103,7 +103,7 @@ handle_call(sum, _From, State) ->
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
     io:format("Sum~p~n",[Sum]),
-    Output = e_ann_math:sigmoid(Sum),
+    Output = e_ann_math:logit(Sum),
     log4erl:info("Output neuron (~p) output:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
     {reply, ok, NewState};

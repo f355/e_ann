@@ -10,12 +10,12 @@
 
 -module(e_ann_math).
 
--export([mse/1, ess/1, rms/1, sigmoid/1,
-         output_node_delta/2, linear_error/2,
-         hyperbolic_tangent/1]).
+-export([mse/1, ess/1, rms/1, sigmoid/1, logit/1,
+         linear_error/2, hyperbolic_tangent/1]).
 
 -export([generate_random_weights/1, interior_node_delta/3,
-         init_weight_deltas/1, update_weights/2]).
+         init_weight_deltas/1, update_weights/2, output_node_delta/2,
+         output_node_delta_logit/2, interior_node_delta_logit/3]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Global Error Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,6 +45,11 @@ rms(Errors) ->
 sigmoid(N) ->
     1 / (1 + (math:exp(-N))).
 
+%% @doc Logit Function.
+%% The logit function doesn't make numerical overflows 
+logit(N) ->
+    0.5 * (1 + math:tanh(N/2)).
+
 %% @doc Hyperbolic Tangent Function
 hyperbolic_tangent(N) ->
     (math:exp(2*N) - 1) / (math:exp(2*N) + 1).
@@ -58,14 +63,23 @@ linear_error(Actual, Ideal) ->
 squared_diff(Error) ->
     math:pow(Error, 2).
 
+derivative_logit(Sum) ->
+    logit(Sum) * (1.0 - logit(Sum)).
+
 derivative_sigmoid(Sum) ->
     sigmoid(Sum) * (1.0 - sigmoid(Sum)).
 
 output_node_delta(E, Sum) ->
     -E * derivative_sigmoid(Sum).
 
+output_node_delta_logit(E, Sum) ->
+    -E * derivative_logit(Sum).
+
 interior_node_delta(Sum, Delta, Weight) ->
     derivative_sigmoid(Sum) * (Delta * Weight).
+
+interior_node_delta_logit(Sum, Delta, Weight) ->
+    derivative_logit(Sum) * (Delta * Weight).
 
 generate_random_weights(Count) ->
     generate_random_weight(Count, []).
