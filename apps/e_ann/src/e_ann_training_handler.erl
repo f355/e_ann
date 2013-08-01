@@ -14,13 +14,13 @@
 -define(GLOBALERROR, 100.0).
 -compile([export_all]).
 
-%% [2,2,1,1,1,0.3,0.7,0.01].
+%% [2,2,1,0.3,0.7,0.01].
 
-train(Architecture) ->
-    [ICount, HCount, OCount, InputBias, HiddenBias,
-     Momentum, LearningRate, ErrorRate] = Architecture,
-    Inputs = read_training_data("inputs.txt"),
-    Outputs = read_training_data("outputs.txt"),
+%% Train with bias on input and hidden layers
+train_with_bias(Architecture, InputFile, OutputFile) ->
+    [ICount, HCount, OCount, Momentum, LearningRate, ErrorRate] = Architecture,
+    Inputs = read_training_data(InputFile),
+    Outputs = read_training_data(OutputFile),
     [{_,IBSup},{_, HBSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
     ISupFun = fun e_ann_input_neuron_sup:add_child/1,

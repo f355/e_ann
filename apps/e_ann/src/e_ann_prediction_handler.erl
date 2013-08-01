@@ -9,9 +9,9 @@
 %%%-------------------------------------------------------------------
 -module(e_ann_prediction_handler).
 
--export([init_network/2]).
+-export([init_network/1]).
 
-init_network(Weights, Architecture) ->
+init_network(Architecture) ->
     [ICount, HCount, OCount, InputBias, HiddenBias] = Architecture,
     [{_,IBSup},{_, HBSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
