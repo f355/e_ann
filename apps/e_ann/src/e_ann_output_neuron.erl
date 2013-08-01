@@ -102,7 +102,6 @@ handle_call(sum, _From, State) ->
     {reply, ok, NewState};
 handle_call(activate_neuron, _From, State) ->
     Sum = State#state.sum,
-    io:format("Sum~p~n",[Sum]),
     Output = e_ann_math:logit(Sum),
     log4erl:info("Output neuron (~p) output:~p~n", [self(), Output]),
     NewState = State#state{output=Output},
