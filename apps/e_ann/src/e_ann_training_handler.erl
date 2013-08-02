@@ -12,15 +12,19 @@
 -module(e_ann_training_handler).
 
 -define(GLOBALERROR, 100.0).
--compile([export_all]).
 
-%% [2,2,1,0.3,0.7,0.01].
+-export([train_xor/0]).
 
-%% Train with bias on input and hidden layers
-train_with_bias(Architecture, InputFile, OutputFile) ->
-    [ICount, HCount, OCount, Momentum, LearningRate, ErrorRate] = Architecture,
-    Inputs = read_training_data(InputFile),
-    Outputs = read_training_data(OutputFile),
+%% Train a XOR with bias neurons.
+train_xor() ->
+    ICount = 2,
+    HCount = 2,
+    OCount = 1,
+    LearningRate = 0.3,
+    Momentum = 0.7,
+    ErrorRate = 0.01,
+    Inputs = read_training_data("priv/input_xor.txt"),
+    Outputs = read_training_data("priv/output_xor.txt"),
     [{_,IBSup},{_, HBSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
     ISupFun = fun e_ann_input_neuron_sup:add_child/1,
@@ -41,20 +45,19 @@ train_with_bias(Architecture, InputFile, OutputFile) ->
                                             IBiasSupFun, IBiasWeightFun),
     HBias = e_ann_network:spawn_bias_neuron(HBSup, OCount,
                                             HBiasSupFun, HBiasWeightFun),
-     Layers = [IL, HL, OL, IBias, HBias],
-    training_complete = training_loop(Inputs, Outputs, LearningRate, Momentum,
-                                      ?GLOBALERROR, ErrorRate, Layers),
+    Layers = [IL, HL, OL, IBias, HBias],
+    training_loop_xor(Inputs, Outputs, LearningRate, Momentum, ?GLOBALERROR,
+                      ErrorRate,Layers),
     get_layer_weights(IL, HL, IBias, HBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Internal Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-training_loop(_, _, _, _, GlobalError, ErrorRate, _)
+
+training_loop_xor(_, _, _, _, GlobalError, ErrorRate, _)
   when GlobalError < ErrorRate ->
     training_complete;
-training_loop([], [], _, _, _, _, _) ->
-    training_set_finished;
-training_loop(Inputs, Outputs, LearningRate, Momentum,
+training_loop_xor(Inputs, Outputs, LearningRate, Momentum,
               GlobalError, ErrorRate, Layers) when GlobalError > ErrorRate ->
     [Ilayer, Hlayer, Olayer, IBias, HBias] = Layers,
     IdealOutput = convert_to_integer(hd(Outputs)),
@@ -68,8 +71,8 @@ training_loop(Inputs, Outputs, LearningRate, Momentum,
     update_weights_hidden_layer_with_bias(Hlayer,HBias,LearningRate,Momentum),
     {ok, NewGlobalError} = e_ann_output_neuron:get_global_error(hd(Olayer)),
     %% infinite loop temporary
-    training_loop(Inputs, Outputs, LearningRate, Momentum,
-                  NewGlobalError, ErrorRate, Layers).
+    training_loop_xor(Inputs, Outputs, LearningRate, Momentum,
+                      NewGlobalError, ErrorRate, Layers).
 
 feed_forward_input_layer_with_bias(Inputs, Ilayer, Layer, IBias) ->
     e_ann_network:set_inputs(Ilayer, Inputs),

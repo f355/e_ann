@@ -9,10 +9,10 @@
 %%%-------------------------------------------------------------------
 -module(e_ann_prediction_handler).
 
--export([init_network/1]).
+-export([init_network_with_bias/1]).
 
-init_network(Architecture) ->
-    [ICount, HCount, OCount, InputBias, HiddenBias] = Architecture,
+init_network_with_bias(Architecture) ->
+    [ICount, HCount, OCount] = Architecture,
     [{_,IBSup},{_, HBSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
     ISupFun = fun e_ann_input_neuron_sup:add_child/1,
@@ -25,7 +25,3 @@ init_network(Architecture) ->
     {ok, IBias} = e_ann_input_bias_neuron_sup:add_child(IBSup),
     {ok, HBias} = e_ann_hidden_bias_neuron_sup:add_child(HBSup),
     [IL, HL, OL, IBias, HBias].
-
-
-make_prediction(Network, Inputs) ->
-    [Il, HL, OL, IBias, HBias] = Network.
