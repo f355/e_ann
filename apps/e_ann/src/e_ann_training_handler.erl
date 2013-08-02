@@ -2,16 +2,18 @@
 %%% @author cantheman <java10cana@gmail.com>
 %%% @copyright (C) 2013, cantheman
 %%% @doc
-%%% This module reads the architecture config and lets the supervisors spawn
-%%% child processes accordingly. It then reads the input values and starts
-%%% training the network. When it's done it will deliver the frozen weights
-%%% that can be used for production training.
+%%% This module trains the network to find optimal weights.
+%%% When it's done it will deliver the frozen weights that can be
+%%% used for production training.
 %%% @end
 %%% Created :  19 June 2013 by cantheman <java10cana@gmail.com>
 %%%-------------------------------------------------------------------
 -module(e_ann_training_handler).
 
 -define(GLOBALERROR, 100.0).
+-define(ERRORRATE, 0.01).
+-define(LEARNINGRATE, 0.3).
+-define(MOMENTUM, 0.7).
 
 -export([train_xor/0]).
 
@@ -20,9 +22,6 @@ train_xor() ->
     ICount = 2,
     HCount = 2,
     OCount = 1,
-    LearningRate = 0.3,
-    Momentum = 0.7,
-    ErrorRate = 0.01,
     Inputs = read_training_data("priv/input_xor.txt"),
     Outputs = read_training_data("priv/output_xor.txt"),
     [{_,IBSup},{_, HBSup},{_,HSup},
@@ -46,8 +45,8 @@ train_xor() ->
     HBias = e_ann_network:spawn_bias_neuron(HBSup, OCount,
                                             HBiasSupFun, HBiasWeightFun),
     Layers = [IL, HL, OL, IBias, HBias],
-    training_loop_xor(Inputs, Outputs, LearningRate, Momentum, ?GLOBALERROR,
-                      ErrorRate,Layers),
+    training_loop_xor(Inputs, Outputs, ?LEARNINGRATE, ?MOMENTUM, ?GLOBALERROR,
+                      ?ERRORRATE, Layers),
     get_layer_weights(IL, HL, IBias, HBias).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
