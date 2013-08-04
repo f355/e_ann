@@ -9,9 +9,9 @@
 %%%-------------------------------------------------------------------
 -module(e_ann_prediction_handler).
 
--export([init_network_with_bias/1]).
+-export([init_xor_network/1, set_xor_weights/2]).
 
-init_network_with_bias(Architecture) ->
+init_xor_network(Architecture) ->
     [ICount, HCount, OCount] = Architecture,
     [{_,IBSup},{_, HBSup},{_,HSup},
      {_,OSup},{_,ISup}] = e_ann_network:get_sup_pids(),
@@ -25,3 +25,10 @@ init_network_with_bias(Architecture) ->
     {ok, IBias} = e_ann_input_bias_neuron_sup:add_child(IBSup),
     {ok, HBias} = e_ann_hidden_bias_neuron_sup:add_child(HBSup),
     [IL, HL, OL, IBias, HBias].
+
+set_xor_weights(Network, Weights) ->
+    [{_,IW1}, {_, IW2}, {_,HW1}, {_,HW2}, {_,IBW}, {_,HBW}] = Weights,
+    [IL, HL, OL, IBias, HBias] = Network,
+    [I1, I2] = IL,
+    [H1, H2] = HL,
+    [O1] = OL.
