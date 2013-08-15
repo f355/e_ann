@@ -88,8 +88,7 @@ handle_call({init_weights, Count}, _From, State) ->
     WeightDeltas = e_ann_math:init_weight_deltas(Count),
     NewState = State#state{weights=Weights},
     FinalState = NewState#state{weight_deltas=WeightDeltas},
-    log4erl:info("Input neuron (~p) initialized weights~p~n",
-                 [self(), Weights]),
+    log4erl:info("Input neuron (~p) initialized weights~p~n", [self(),Weights]),
     {reply, ok, FinalState};
 handle_call({update_weights, LearningRate, Momentum}, _From, State) ->
     Gradient = State#state.gradient,
