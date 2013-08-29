@@ -34,4 +34,8 @@ set_xor_weights(Network, Weights) ->
     [O1] = OL,
     e_ann_input_neuron:set_weights(I1, IW1),
     e_ann_input_neuron:set_weights(I2, IW2),
+    e_ann_hidden_neuron:set_weights(H1, HW1),
+    e_ann_hidden_neuron:set_weights(H2, HW2),
+    e_ann_input_bias_neuron:set_weights(IBias, IBW),
+    e_ann_hidden_bias_neuron:set_weights(HBias, HBW),
     ok.
