@@ -15,7 +15,18 @@
 -define(LEARNINGRATE, 0.3).
 -define(MOMENTUM, 0.7).
 
+-define(GAWINPUTS, "Insplanet_Keyword_inputs.csv").
+-define(GAWOUTPUTS, "Insplanet_Keyword_outputs.csv").
+
+-compile([export_all]).
 -export([train_xor/0]).
+
+train_gaw_data() ->
+    ICount = 19,
+    HCount = 19,
+    OCount = 1,
+    Inputs = read_gaw_training_data(?GAWINPUTS),
+    Outputs = file:read_file(?GAWOUTPUTS).
 
 %% Train a XOR with bias neurons.
 train_xor() ->
@@ -125,8 +136,36 @@ read_training_data(File) ->
     Inputs = [ re:split(L, ",", [{return, list}]) || L <- Lines ],
     lists:delete([], Inputs).
 
+read_gaw_training_data(File) ->
+    {ok, Bin} = file:read_file(File),
+    binary:split(Bin, <<"\n">>, [global]).
+
+read_gaw_training_data_line(Line) ->
+    Values = binary:split(Line, <<";">>, [global]),
+    lists:map(fun(X) -> convert_percentages_to_float(X) end, Values).
+
+convert_percentages_to_float(Percentage) ->
+    Regex = re:replace(Percentage, "[%]", "", [{return,list}]),
+    Num = convert_list(Regex),
+    Number = convert_number(Num / 100),
+    list_to_binary(Number).
+
 convert_to_integer(List) ->
     [ list_to_float(X) || X <-List ].
+
+convert_number(Number) when is_integer(Number) ->
+    integer_to_list(Number);
+convert_number(Number) when is_float(Number) ->
+    float_to_list(Number).
+
+convert_list(List) ->
+    case string:to_float(List) of
+        {error,_} ->
+            list_to_integer(List);
+        {Float, _ } ->
+            Float
+    end.
+
 
 get_layer_weights(Ilayer, Hlayer, IBias, HBias) ->
     I_W = [ {input_neuron_weights, e_ann_input_neuron:get_weights(Neuron)} ||
