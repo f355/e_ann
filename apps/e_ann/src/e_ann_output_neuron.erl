@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, add_input/2, activate_neuron/1,
+-export([start_link/0, add_input/2, reset_input/1, activate_neuron/1,
         sum/1, calculate_error/1, calculate_node_delta/1]).
 
 -export([get_node_delta/1, backpropagate_with_bias/3,
@@ -39,6 +39,9 @@ start_link() ->
 
 add_input(NeuronPid, Input) ->
     gen_server:call(NeuronPid, {add_to_inputs, Input}).
+
+reset_input(NeuronPid) ->
+    gen_server:call(NeuronPid, reset_input).
 
 set_ideal_output(NeuronPid, IdealOutput) ->
     gen_server:call(NeuronPid, {set_ideal_output, IdealOutput}).
@@ -111,6 +114,9 @@ handle_call({add_to_inputs, Input}, _From, State) ->
     NewInputs = [Input | Inputs],
     log4erl:info("Output neuron (~p) added ~p to inputs~n",[self(), Input]),
     NewState = State#state{inputs=NewInputs},
+    {reply, ok, NewState};
+handle_call(reset_input, _From, State) ->
+    NewState = State#state{inputs=[]},
     {reply, ok, NewState};
 handle_call(get_node_delta, _From, State) ->
     {reply, State#state.node_delta, State};
